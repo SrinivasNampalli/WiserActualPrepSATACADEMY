@@ -1,0 +1,408 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --font-sans: "Inter", "Inter Fallback", sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for carousel */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Added bounce animation for scroll indicator */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1.5s ease-in-out infinite;
+}
+
+/* Added tabular-nums for consistent number widths in counters */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth chart animations */
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw {
+  animation: drawLine 2s ease-out forwards;
+}
+
+/* Added 3D flip animation styles for flashcards */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Flashcard flip transition */
+.flashcard-flip {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+/* ========================================
+   THEME SYSTEM - Color Variables
+   ======================================== */
+
+/* Sakura Theme (Cherry Pink) */
+.theme-sakura {
+  --theme-base: #FF6B9D;
+  --theme-light: #FFB3CC;
+  --theme-dark: #C44569;
+  --theme-gradient: linear-gradient(135deg, #FF6B9D, #C44569);
+}
+
+/* Ocean Theme (Teal) */
+.theme-ocean {
+  --theme-base: #4ECDC4;
+  --theme-light: #A8E6CF;
+  --theme-dark: #2C7873;
+  --theme-gradient: linear-gradient(135deg, #4ECDC4, #2C7873);
+}
+
+/* Sunset Theme (Orange) */
+.theme-sunset {
+  --theme-base: #F7931E;
+  --theme-light: #FFD699;
+  --theme-dark: #D4451A;
+  --theme-gradient: linear-gradient(135deg, #F7931E, #D4451A);
+}
+
+/* Default to Ocean theme */
+:root {
+  --theme-base: #4ECDC4;
+  --theme-light: #A8E6CF;
+  --theme-dark: #2C7873;
+  --theme-gradient: linear-gradient(135deg, #4ECDC4, #2C7873);
+}
+
+/* Theme utility classes */
+.bg-theme {
+  background: var(--theme-gradient);
+}
+
+.bg-theme-base {
+  background-color: var(--theme-base);
+}
+
+.text-theme {
+  color: var(--theme-base);
+}
+
+.border-theme {
+  border-color: var(--theme-base);
+}
+
+/* ========================================
+   MASCOT ANIMATIONS
+   ======================================== */
+
+/* Idle floating animation */
+@keyframes mascot-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-4px) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+}
+
+.animate-mascot-float {
+  animation: mascot-float 3s ease-in-out infinite;
+}
+
+/* Happy bouncing animation */
+@keyframes mascot-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-12px) scale(1.05);
+  }
+  50% {
+    transform: translateY(0) scale(0.95);
+  }
+  75% {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+.animate-mascot-bounce {
+  animation: mascot-bounce 0.6s ease-in-out infinite;
+}
+
+/* Thinking tilt animation */
+@keyframes mascot-tilt {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(10deg) translateY(-3px);
+  }
+}
+
+.animate-mascot-tilt {
+  animation: mascot-tilt 2s ease-in-out infinite;
+}
+
+/* Celebrating jump animation */
+@keyframes mascot-celebrate {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  10% {
+    transform: translateY(-20px) scale(1.1) rotate(-5deg);
+  }
+  20% {
+    transform: translateY(0) scale(0.9) rotate(5deg);
+  }
+  30% {
+    transform: translateY(-15px) scale(1.05) rotate(-3deg);
+  }
+  40% {
+    transform: translateY(0) scale(0.95) rotate(3deg);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.02) rotate(-2deg);
+  }
+  60% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+.animate-mascot-celebrate {
+  animation: mascot-celebrate 1.5s ease-in-out;
+}
+
+/* Sad droop animation */
+@keyframes mascot-droop {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(4px) rotate(-3deg);
+  }
+}
+
+.animate-mascot-droop {
+  animation: mascot-droop 2s ease-in-out infinite;
+}
+
+/* Encouraging wave animation */
+@keyframes mascot-wave {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(3deg);
+  }
+  50% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(3deg);
+  }
+}
+
+.animate-mascot-wave {
+  animation: mascot-wave 0.8s ease-in-out infinite;
+}
+
+/* Hand wave for encouraging emotion */
+@keyframes mascot-hand-wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(20deg);
+  }
+}
+
+.animate-mascot-hand-wave {
+  animation: mascot-hand-wave 0.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
