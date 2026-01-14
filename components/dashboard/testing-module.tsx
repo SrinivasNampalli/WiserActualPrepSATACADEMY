@@ -9,6 +9,7 @@ import { Play, Trophy, Clock, TrendingUp } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { SATQuestionSolver } from "./sat-question-solver"
+import { CategoryStats } from "./category-stats"
 
 interface TestingModuleProps {
   testResults: any[]
@@ -104,6 +105,9 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
           </CardContent>
         </Card>
       </div>
+
+      {/* Category Performance Stats */}
+      <CategoryStats testResults={testResults} />
 
       {/* AI Question Solver */}
       <SATQuestionSolver />

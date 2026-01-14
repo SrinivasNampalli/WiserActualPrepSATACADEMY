@@ -17,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { Mascot } from "@/components/mascot"
 import { useMascot } from "@/lib/mascot-context"
+import { normalizeCategoryId, type CategoryStatsMap } from "@/lib/sat-categories"
 
 interface Question {
     id: string
@@ -136,11 +137,26 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
         setIsSubmitting(true)
         const supabase = createClient()
 
-        // Calculate score
+        // Calculate score and category stats
         let correctCount = 0
+        const categoryStats: CategoryStatsMap = {}
+
         questions.forEach((q) => {
-            if (answers[q.id] === q.correct_answer) {
+            const isCorrect = answers[q.id] === q.correct_answer
+            if (isCorrect) {
                 correctCount++
+            }
+
+            // Track by category
+            const categoryId = normalizeCategoryId(q.category || "general")
+            if (categoryId) {
+                if (!categoryStats[categoryId]) {
+                    categoryStats[categoryId] = { correct: 0, total: 0 }
+                }
+                categoryStats[categoryId]!.total++
+                if (isCorrect) {
+                    categoryStats[categoryId]!.correct++
+                }
             }
         })
 
@@ -158,6 +174,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                 total_questions: questions.length,
                 time_taken_minutes: Math.round((test.duration_minutes * 60 - timeLeft) / 60),
                 completed_at: new Date().toISOString(),
+                category_stats: categoryStats,
             })
 
             if (error) throw error
