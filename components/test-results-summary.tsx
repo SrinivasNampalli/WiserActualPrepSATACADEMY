@@ -18,6 +18,9 @@ import {
     AlertTriangle,
     CheckCircle2,
     XCircle,
+    X,
+    Heart,
+    Star,
 } from "lucide-react"
 import {
     SAT_MATH_CATEGORIES,
@@ -49,11 +52,13 @@ export function TestResultsSummary({
 }: TestResultsSummaryProps) {
     const router = useRouter()
     const [showDetails, setShowDetails] = useState(false)
+    const [showPicnicVideo, setShowPicnicVideo] = useState(false)
+    const [hasUnlockedReward, setHasUnlockedReward] = useState(false)
 
     const percentage = Math.round((correctAnswers / totalQuestions) * 100)
     const scoreLevel = getScoreLevel(score)
 
-    // Trigger confetti for good scores
+    // Trigger confetti for good scores + special reward for 100%
     useEffect(() => {
         if (percentage >= 70) {
             confetti({
@@ -61,6 +66,24 @@ export function TestResultsSummary({
                 spread: 70,
                 origin: { y: 0.6 },
             })
+        }
+
+        // Special celebration for 100%!
+        if (percentage === 100) {
+            setHasUnlockedReward(true)
+            // Extra confetti celebration
+            setTimeout(() => {
+                confetti({
+                    particleCount: 200,
+                    spread: 100,
+                    origin: { y: 0.5 },
+                    colors: ['#ff69b4', '#ff1493', '#ff6b6b', '#ffd700'],
+                })
+            }, 500)
+            // Show video after a moment
+            setTimeout(() => {
+                setShowPicnicVideo(true)
+            }, 2000)
         }
     }, [percentage])
 
@@ -218,10 +241,10 @@ export function TestResultsSummary({
                                 <li key={idx} className="flex items-start gap-3">
                                     <div
                                         className={`mt-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${rec.priority === "high"
-                                                ? "bg-red-500/20 text-red-400"
-                                                : rec.priority === "medium"
-                                                    ? "bg-amber-500/20 text-amber-400"
-                                                    : "bg-green-500/20 text-green-400"
+                                            ? "bg-red-500/20 text-red-400"
+                                            : rec.priority === "medium"
+                                                ? "bg-amber-500/20 text-amber-400"
+                                                : "bg-green-500/20 text-green-400"
                                             }`}
                                     >
                                         {idx + 1}
@@ -267,10 +290,10 @@ export function TestResultsSummary({
                                         </div>
                                         <span
                                             className={`text-sm font-bold ${cat.percentage >= 70
-                                                    ? "text-green-400"
-                                                    : cat.percentage >= 50
-                                                        ? "text-amber-400"
-                                                        : "text-red-400"
+                                                ? "text-green-400"
+                                                : cat.percentage >= 50
+                                                    ? "text-amber-400"
+                                                    : "text-red-400"
                                                 }`}
                                         >
                                             {cat.percentage}% ({cat.correct}/{cat.total})
@@ -310,8 +333,68 @@ export function TestResultsSummary({
                         <RefreshCw className="h-5 w-5 mr-2" />
                         Take Another Test
                     </Button>
+                    {hasUnlockedReward && (
+                        <Button
+                            size="lg"
+                            onClick={() => setShowPicnicVideo(true)}
+                            className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 animate-pulse"
+                        >
+                            <Heart className="h-5 w-5 mr-2" />
+                            View Special Reward 💕
+                        </Button>
+                    )}
                 </div>
             </div>
+
+            {/* Perfect Score Picnic Video Modal */}
+            {showPicnicVideo && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-300"
+                    onClick={() => setShowPicnicVideo(false)}
+                >
+                    <div
+                        className="relative max-w-3xl w-full mx-4 bg-gradient-to-br from-pink-900/50 to-purple-900/50 rounded-2xl border border-pink-500/30 p-6 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="text-center mb-4">
+                            <div className="flex items-center justify-center gap-2 text-2xl font-bold text-pink-300">
+                                <Star className="h-6 w-6 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                                Perfect Score Achieved!
+                                <Star className="h-6 w-6 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                            </div>
+                            <p className="text-pink-200/80 mt-2">You've unlocked a special reward! 🎉💕</p>
+                        </div>
+
+                        {/* Video Player */}
+                        <div className="relative rounded-xl overflow-hidden bg-black shadow-xl">
+                            <video
+                                autoPlay
+                                controls
+                                className="w-full aspect-video"
+                                src="/girlfriend/picnicreward.mp4"
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+
+                        {/* Close Button */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowPicnicVideo(false)}
+                            className="absolute top-2 right-2 text-pink-300 hover:text-white hover:bg-pink-500/20"
+                        >
+                            <X className="h-6 w-6" />
+                        </Button>
+
+                        {/* Footer message */}
+                        <p className="text-center text-pink-200/60 text-sm mt-4">
+                            Keep up the amazing work! 💪✨
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -2,15 +2,25 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { useMascot, type MascotEmotion } from "@/lib/mascot-context"
-import { useThemeContext } from "@/lib/theme-context"
+import Image from "next/image"
 
-// Tiny floating mascot that follows your scroll with speech bubbles
+// Map emotions to girlfriend expressions
+const emotionToImage: Record<MascotEmotion, string> = {
+    idle: "/girlfriend/animegirlsleepy.jpg",
+    thinking: "/girlfriend/animegirlbuisnessserious.jpg",
+    happy: "/girlfriend/animegirlsmirk.jpg",
+    celebrating: "/girlfriend/animegirlsmirk.jpg",
+    encouraging: "/girlfriend/animegirltsundere.jpg",
+    waving: "/girlfriend/animegirlsmirk.jpg",
+}
+
+// Anime girlfriend mascot that follows your cursor
 export function Mascot() {
     const { emotion, message, isVisible } = useMascot()
-    const { theme } = useThemeContext()
     const [hasMounted, setHasMounted] = useState(false)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [targetPos, setTargetPos] = useState({ x: 0, y: 0 })
+    const [isHovered, setIsHovered] = useState(false)
     const mascotRef = useRef<HTMLDivElement>(null)
 
     // Prevent hydration mismatch - only render on client
@@ -26,8 +36,8 @@ export function Mascot() {
 
         const animate = () => {
             setPosition(prev => ({
-                x: prev.x + (targetPos.x - prev.x) * 0.1,
-                y: prev.y + (targetPos.y - prev.y) * 0.1,
+                x: prev.x + (targetPos.x - prev.x) * 0.08,
+                y: prev.y + (targetPos.y - prev.y) * 0.08,
             }))
             animationId = requestAnimationFrame(animate)
         }
@@ -45,12 +55,12 @@ export function Mascot() {
             const windowHeight = window.innerHeight
 
             // Mascot stays in bottom-right quadrant but moves slightly with mouse
-            const baseX = windowWidth - 80
-            const baseY = windowHeight - 80
+            const baseX = windowWidth - 70
+            const baseY = windowHeight - 90
 
-            // Add subtle movement based on mouse position (max 30px offset)
-            const offsetX = ((e.clientX / windowWidth) - 0.5) * 60
-            const offsetY = ((e.clientY / windowHeight) - 0.5) * 60
+            // Add subtle movement based on mouse position (max 40px offset)
+            const offsetX = ((e.clientX / windowWidth) - 0.5) * 80
+            const offsetY = ((e.clientY / windowHeight) - 0.5) * 80
 
             setTargetPos({
                 x: baseX + offsetX,
@@ -60,12 +70,12 @@ export function Mascot() {
 
         // Initial position
         setTargetPos({
-            x: window.innerWidth - 80,
-            y: window.innerHeight - 80,
+            x: window.innerWidth - 70,
+            y: window.innerHeight - 90,
         })
         setPosition({
-            x: window.innerWidth - 80,
-            y: window.innerHeight - 80,
+            x: window.innerWidth - 70,
+            y: window.innerHeight - 90,
         })
 
         window.addEventListener("mousemove", handleMouseMove)
@@ -75,69 +85,70 @@ export function Mascot() {
     // Don't render until mounted on client (prevents hydration mismatch)
     if (!hasMounted || !isVisible) return null
 
+    const currentImage = emotionToImage[emotion] || emotionToImage.idle
+
     return (
         <div
             ref={mascotRef}
-            className="fixed z-50 pointer-events-none select-none"
+            className="fixed z-50 pointer-events-auto select-none cursor-pointer"
             style={{
                 left: position.x,
                 top: position.y,
                 transform: "translate(-50%, -50%)",
             }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             {/* Speech Bubble */}
             {message && (
                 <div
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap shadow-lg animate-in fade-in zoom-in-95 duration-200"
-                    style={{
-                        backgroundColor: theme.base,
-                        color: "#fff",
-                    }}
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap shadow-xl animate-in fade-in zoom-in-95 duration-200 bg-white/95 backdrop-blur-sm border border-pink-200"
+                    style={{ color: "#1B4B6B" }}
                 >
                     {message}
                     {/* Speech bubble tail */}
                     <div
                         className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0"
                         style={{
-                            borderLeft: "6px solid transparent",
-                            borderRight: "6px solid transparent",
-                            borderTop: `6px solid ${theme.base}`,
+                            borderLeft: "8px solid transparent",
+                            borderRight: "8px solid transparent",
+                            borderTop: "8px solid rgba(255,255,255,0.95)",
                         }}
                     />
                 </div>
             )}
 
-            {/* Tiny Mascot - just a simple cute blob/circle */}
-            <div className={`w-12 h-12 ${getEmotionAnimation(emotion)} transition-all duration-200`}>
-                <svg viewBox="0 0 48 48" className="w-full h-full drop-shadow-md">
-                    {/* Body - round blob */}
-                    <circle
-                        cx="24"
-                        cy="26"
-                        r="18"
-                        fill={theme.base}
-                        className="transition-colors duration-300"
+            {/* Girlfriend Character */}
+            <div
+                className={`relative transition-all duration-300 ${getEmotionAnimation(emotion)} ${isHovered ? 'scale-110' : 'scale-100'}`}
+            >
+                {/* Glow effect */}
+                <div className="absolute inset-0 rounded-full bg-pink-400/30 blur-xl scale-110" />
+
+                {/* Character image */}
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-xl ring-2 ring-pink-300/50">
+                    <Image
+                        src={currentImage}
+                        alt="Study Buddy"
+                        fill
+                        className="object-cover object-top"
+                        priority
                     />
+                </div>
 
-                    {/* Cheeks/blush */}
-                    <circle cx="14" cy="28" r="3" fill="#fff" opacity="0.3" />
-                    <circle cx="34" cy="28" r="3" fill="#fff" opacity="0.3" />
+                {/* Sparkles when celebrating */}
+                {emotion === "celebrating" && (
+                    <>
+                        <div className="absolute -top-2 -left-2 w-3 h-3 bg-yellow-400 rounded-full animate-ping" />
+                        <div className="absolute -top-1 -right-3 w-2 h-2 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: "0.2s" }} />
+                        <div className="absolute -bottom-1 left-0 w-2 h-2 bg-cyan-400 rounded-full animate-ping" style={{ animationDelay: "0.4s" }} />
+                    </>
+                )}
 
-                    {/* Eyes */}
-                    {getEyes(emotion)}
-
-                    {/* Mouth */}
-                    {getMouth(emotion)}
-
-                    {/* Sparkles when celebrating */}
-                    {emotion === "celebrating" && (
-                        <>
-                            <circle cx="8" cy="12" r="2" fill="#FFD700" className="animate-ping" />
-                            <circle cx="40" cy="12" r="2" fill="#FFD700" className="animate-ping" style={{ animationDelay: "0.2s" }} />
-                            <circle cx="24" cy="4" r="1.5" fill="#FFD700" className="animate-ping" style={{ animationDelay: "0.4s" }} />
-                        </>
-                    )}
-                </svg>
+                {/* Heart when happy */}
+                {(emotion === "happy" || emotion === "waving") && (
+                    <div className="absolute -top-1 -right-1 text-lg animate-bounce">💕</div>
+                )}
             </div>
         </div>
     )
@@ -151,73 +162,10 @@ function getEmotionAnimation(emotion: MascotEmotion): string {
         case "waving":
             return "animate-pulse"
         case "thinking":
-            return "animate-mascot-tilt"
+            return ""
         case "encouraging":
             return "animate-mascot-wave"
         default:
             return "animate-mascot-float"
-    }
-}
-
-function getEyes(emotion: MascotEmotion) {
-    switch (emotion) {
-        case "celebrating":
-        case "happy":
-            // Happy squinty eyes
-            return (
-                <>
-                    <path d="M17 22 Q19 20 21 22" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                    <path d="M27 22 Q29 20 31 22" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                </>
-            )
-        case "thinking":
-            // Looking up eyes
-            return (
-                <>
-                    <circle cx="19" cy="20" r="3" fill="#fff" />
-                    <circle cx="19" cy="19" r="1.5" fill="#333" />
-                    <circle cx="29" cy="20" r="3" fill="#fff" />
-                    <circle cx="29" cy="19" r="1.5" fill="#333" />
-                </>
-            )
-        case "encouraging":
-        case "waving":
-            // Winking
-            return (
-                <>
-                    <circle cx="19" cy="22" r="3" fill="#fff" />
-                    <circle cx="19" cy="22" r="1.5" fill="#333" />
-                    <path d="M27 22 Q29 20 31 22" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-                </>
-            )
-        default:
-            // Normal eyes
-            return (
-                <>
-                    <circle cx="19" cy="22" r="3" fill="#fff" />
-                    <circle cx="19" cy="22" r="1.5" fill="#333" />
-                    <circle cx="29" cy="22" r="3" fill="#fff" />
-                    <circle cx="29" cy="22" r="1.5" fill="#333" />
-                </>
-            )
-    }
-}
-
-function getMouth(emotion: MascotEmotion) {
-    switch (emotion) {
-        case "celebrating":
-            // Big open smile
-            return <ellipse cx="24" cy="32" rx="5" ry="4" fill="#fff" />
-        case "happy":
-        case "encouraging":
-        case "waving":
-            // Smile
-            return <path d="M20 30 Q24 35 28 30" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
-        case "thinking":
-            // Small o
-            return <circle cx="24" cy="32" r="2" fill="#fff" />
-        default:
-            // Small smile
-            return <path d="M21 31 Q24 33 27 31" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none" />
     }
 }
