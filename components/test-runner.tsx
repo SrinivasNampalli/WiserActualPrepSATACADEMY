@@ -165,7 +165,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
         const score = Math.round(400 + (rawScore * 1200)) // Scale 400-1600
 
         try {
-            const { error } = await supabase.from("test_results").insert({
+            const { data: resultData, error } = await supabase.from("test_results").insert({
                 user_id: userId,
                 test_id: test.id,
                 score: score,
@@ -175,10 +175,12 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                 time_taken_minutes: Math.round((test.duration_minutes * 60 - timeLeft) / 60),
                 completed_at: new Date().toISOString(),
                 category_stats: categoryStats,
-            })
+            }).select().single()
 
             if (error) throw error
-            router.push("/dashboard")
+
+            // Redirect to results page with detailed summary
+            router.push(`/results/${resultData.id}`)
         } catch (error) {
             console.error("Error submitting test:", error)
             alert("Failed to submit test. Please try again.")
