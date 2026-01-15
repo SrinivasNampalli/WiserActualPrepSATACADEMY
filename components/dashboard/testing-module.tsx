@@ -5,11 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Play, Trophy, Clock, TrendingUp } from "lucide-react"
+import { Play, Trophy, Clock, TrendingUp, RotateCcw, Eye } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { SATQuestionSolver } from "./sat-question-solver"
-import { CategoryStats } from "./category-stats"
 
 interface TestingModuleProps {
   testResults: any[]
@@ -22,12 +21,10 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
   const [isStarting, setIsStarting] = useState(false)
 
   const startTest = async (testType: string, title: string) => {
-    // Legacy logic for hardcoded cards (creates an empty test shell)
     setIsStarting(true)
     const supabase = createClient()
 
     try {
-      console.log("[v0] Creating new test session")
       const { data, error } = await supabase
         .from("tests")
         .insert({
@@ -41,10 +38,9 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
         .single()
 
       if (error) throw error
-
       router.push(`/test/${data.id}`)
     } catch (error) {
-      console.error("[v0] Error starting test:", error)
+      console.error("Error starting test:", error)
     } finally {
       setIsStarting(false)
     }
@@ -52,6 +48,10 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
 
   const startTemplateTest = (testId: string) => {
     router.push(`/test/${testId}`)
+  }
+
+  const viewResults = (resultId: string) => {
+    router.push(`/results/${resultId}`)
   }
 
   const calculateAverageScore = () => {
@@ -67,6 +67,11 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
     const improvement = latest - earliest
     return Math.max(0, Math.min(100, (improvement / 600) * 100))
   }
+
+  // Get unique test IDs that have been completed (for retake section)
+  const completedTestIds = new Set(testResults.map(r => r.test_id))
+  const newTests = availableTests.filter(t => !completedTestIds.has(t.id))
+  const retakeTests = availableTests.filter(t => completedTestIds.has(t.id))
 
   return (
     <div className="space-y-6">
@@ -106,13 +111,10 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
         </Card>
       </div>
 
-      {/* Category Performance Stats */}
-      <CategoryStats testResults={testResults} />
-
       {/* AI Question Solver */}
       <SATQuestionSolver />
 
-      {/* Available Tests */}
+      {/* Available Tests (New) */}
       <Card>
         <CardHeader>
           <CardTitle>Start a New Test</CardTitle>
@@ -120,8 +122,7 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
-            {/* Render Admin Templates First */}
-            {availableTests.map((test) => (
+            {newTests.map((test) => (
               <div key={test.id} className="flex flex-col p-4 border-2 border-[#4ECDC4]/50 rounded-lg hover:border-[#4ECDC4] transition-colors bg-[#4ECDC4]/5">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold line-clamp-1" title={test.title}>{test.title}</h3>
@@ -142,14 +143,77 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
               </div>
             ))}
 
-            {availableTests.length === 0 && (
+            {newTests.length === 0 && retakeTests.length === 0 && (
               <div className="col-span-3 text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p>No practice tests available right now. Please check back later.</p>
+              </div>
+            )}
+
+            {newTests.length === 0 && retakeTests.length > 0 && (
+              <div className="col-span-3 text-center py-4 text-muted-foreground">
+                <p>You've completed all available tests! Check the Retake section below.</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Retake Tests Section */}
+      {retakeTests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-amber-500" />
+              Retake Previous Tests
+            </CardTitle>
+            <CardDescription>Practice makes perfect! Retake tests to improve your score</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4">
+              {retakeTests.map((test) => {
+                // Find the best score for this test
+                const testScores = testResults.filter(r => r.test_id === test.id)
+                const bestScore = Math.max(...testScores.map(r => r.score))
+                const latestResult = testScores[0]
+
+                return (
+                  <div key={test.id} className="flex flex-col p-4 border-2 border-amber-500/30 rounded-lg hover:border-amber-500/50 transition-colors bg-amber-500/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold line-clamp-1" title={test.title}>{test.title}</h3>
+                      <Badge variant="outline" className="border-amber-500 text-amber-600">
+                        Best: {bestScore}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2 capitalize">{test.test_type} Test</p>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Completed {testScores.length} time{testScores.length > 1 ? 's' : ''}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => viewResults(latestResult.id)}
+                        className="flex-1 border-slate-300"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Results
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => startTemplateTest(test.id)}
+                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        Retake
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Test Results */}
       <Card>
@@ -163,28 +227,38 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
               <p>No test results yet. Start your first test above!</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {testResults.map((result) => (
-                <div key={result.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="space-y-3">
+              {testResults.slice(0, 5).map((result) => (
+                <div
+                  key={result.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  onClick={() => viewResults(result.id)}
+                >
                   <div className="flex-1">
                     <h4 className="font-semibold">{result.tests?.title || "Test"}</h4>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      <span>Completed: {new Date(result.completed_at).toLocaleDateString()}</span>
-                      <span>Time: {result.time_taken_minutes} mins</span>
+                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                      <span>{new Date(result.completed_at).toLocaleDateString()}</span>
+                      <span>{result.time_taken_minutes} mins</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-[#1B4B6B]">
-                      {result.score}/{result.total_score}
-                    </div>
-                    {result.math_score && result.reading_score && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Math: {result.math_score} | R&W: {result.reading_score}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[#1B4B6B]">
+                        {result.score}
                       </div>
-                    )}
+                      <div className="text-xs text-muted-foreground">
+                        out of {result.total_score}
+                      </div>
+                    </div>
+                    <Eye className="h-5 w-5 text-slate-400" />
                   </div>
                 </div>
               ))}
+              {testResults.length > 5 && (
+                <p className="text-center text-sm text-muted-foreground pt-2">
+                  Showing 5 most recent results
+                </p>
+              )}
             </div>
           )}
         </CardContent>
