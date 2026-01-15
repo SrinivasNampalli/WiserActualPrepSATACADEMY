@@ -80,6 +80,7 @@ interface MascotContextType {
     message: string | null
     isVisible: boolean
     setEmotion: (emotion: MascotEmotion) => void
+    setMessage: (message: string | null) => void
     showMessage: (flag: MessageFlag) => void
     hideMessage: () => void
     setVisible: (visible: boolean) => void
@@ -160,6 +161,7 @@ export function MascotProvider({ children }: { children: ReactNode }) {
             message,
             isVisible,
             setEmotion,
+            setMessage,
             showMessage,
             hideMessage,
             setVisible,

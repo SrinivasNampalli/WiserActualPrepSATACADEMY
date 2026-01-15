@@ -90,12 +90,14 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Average Score</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Current Score</CardTitle>
             <TrendingUp className="h-4 w-4 text-[#4ECDC4]" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-[#1B4B6B]">{calculateAverageScore()}</div>
-            <p className="text-xs text-muted-foreground mt-1">Out of 1600</p>
+            <div className="text-3xl font-bold text-[#1B4B6B]">{testResults[0]?.score || '—'}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {testResults.length > 0 ? 'Latest test score' : 'Take a test to see your score'}
+            </p>
           </CardContent>
         </Card>
 

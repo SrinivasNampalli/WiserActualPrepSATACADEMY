@@ -333,68 +333,40 @@ export function TestResultsSummary({
                         <RefreshCw className="h-5 w-5 mr-2" />
                         Take Another Test
                     </Button>
-                    {hasUnlockedReward && (
-                        <Button
-                            size="lg"
-                            onClick={() => setShowPicnicVideo(true)}
-                            className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 animate-pulse"
-                        >
-                            <Heart className="h-5 w-5 mr-2" />
-                            View Special Reward 💕
-                        </Button>
-                    )}
                 </div>
-            </div>
 
-            {/* Perfect Score Picnic Video Modal */}
-            {showPicnicVideo && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-300"
-                    onClick={() => setShowPicnicVideo(false)}
-                >
-                    <div
-                        className="relative max-w-3xl w-full mx-4 bg-gradient-to-br from-pink-900/50 to-purple-900/50 rounded-2xl border border-pink-500/30 p-6 shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Header */}
-                        <div className="text-center mb-4">
+                {/* Perfect Score Video - shows naturally on screen */}
+                {hasUnlockedReward && (
+                    <Card className="bg-gradient-to-br from-pink-900/30 to-purple-900/30 border-pink-500/30 overflow-hidden">
+                        <CardHeader className="text-center">
                             <div className="flex items-center justify-center gap-2 text-2xl font-bold text-pink-300">
-                                <Star className="h-6 w-6 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
-                                Perfect Score Achieved!
-                                <Star className="h-6 w-6 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                                <Star className="h-6 w-6 text-yellow-400 animate-pulse" />
+                                Perfect Score Reward!
+                                <Star className="h-6 w-6 text-yellow-400 animate-pulse" />
                             </div>
-                            <p className="text-pink-200/80 mt-2">You've unlocked a special reward! 🎉💕</p>
-                        </div>
-
-                        {/* Video Player */}
-                        <div className="relative rounded-xl overflow-hidden bg-black shadow-xl">
-                            <video
-                                autoPlay
-                                controls
-                                className="w-full aspect-video"
-                                src="/girlfriend/picnicreward.mp4"
-                            >
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-
-                        {/* Close Button */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowPicnicVideo(false)}
-                            className="absolute top-2 right-2 text-pink-300 hover:text-white hover:bg-pink-500/20"
-                        >
-                            <X className="h-6 w-6" />
-                        </Button>
-
-                        {/* Footer message */}
-                        <p className="text-center text-pink-200/60 text-sm mt-4">
-                            Keep up the amazing work! 💪✨
-                        </p>
-                    </div>
-                </div>
-            )}
+                            <CardDescription className="text-pink-200/80">
+                                You got 100%! Here's a special reward for your hard work 🎉💕
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="relative rounded-xl overflow-hidden bg-black shadow-xl">
+                                <video
+                                    autoPlay
+                                    loop
+                                    controls
+                                    className="w-full aspect-video"
+                                    src="/girlfriend/picnicreward.mp4"
+                                >
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                            <p className="text-center text-pink-200/60 text-sm mt-4">
+                                Keep up the amazing work! 💪✨
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
         </div>
     )
 }
