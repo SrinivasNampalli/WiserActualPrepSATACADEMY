@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { TestingModule } from "./testing-module"
 import { AISummarizer } from "./ai-summarizer"
-import { CourseProvider } from "./course-provider"
 import { FlashcardGenerator } from "./flashcard-generator"
 import { ThemeSelector } from "@/components/theme-selector"
 import { Mascot } from "@/components/mascot"
@@ -77,10 +76,9 @@ export function DashboardContent({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="testing">Testing Module</TabsTrigger>
             <TabsTrigger value="summarizer">AI Summarizer</TabsTrigger>
-            <TabsTrigger value="courses">Course Content</TabsTrigger>
             <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
           </TabsList>
 
@@ -90,10 +88,6 @@ export function DashboardContent({
 
           <TabsContent value="summarizer" className="space-y-6">
             <AISummarizer summarizerHistory={summarizerHistory} userId={user.id} />
-          </TabsContent>
-
-          <TabsContent value="courses" className="space-y-6">
-            <CourseProvider courseProgress={courseProgress} userId={user.id} />
           </TabsContent>
 
           <TabsContent value="flashcards" className="space-y-6">
@@ -107,4 +101,3 @@ export function DashboardContent({
     </div>
   )
 }
-
