@@ -67,17 +67,18 @@ export async function POST(request: NextRequest) {
         if (apiKey && sources.length > 0) {
             const contentForAI = sources.map((s) => s.snippet).join("\n\n")
 
-            const geminiResponse = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    {
-                                        text: `You are an SAT tutor helping a student understand: "${query}"
+            try {
+                const geminiResponse = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        {
+                                            text: `You are an SAT tutor helping a student understand: "${query}"
 
 Based on this information:
 ${contentForAI}
@@ -88,21 +89,26 @@ Provide a clear, helpful explanation for an SAT student. Include:
 3. A quick tip or example if relevant
 
 Keep it concise and student-friendly. Use bullet points where helpful.`,
-                                    },
-                                ],
+                                        },
+                                    ],
+                                },
+                            ],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 500,
                             },
-                        ],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 500,
-                        },
-                    }),
-                }
-            )
+                        }),
+                    }
+                )
 
-            if (geminiResponse.ok) {
-                const geminiData = await geminiResponse.json()
-                aiSummary = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || null
+                if (geminiResponse.ok) {
+                    const geminiData = await geminiResponse.json()
+                    aiSummary = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || null
+                } else {
+                    console.error("Gemini API error:", await geminiResponse.text())
+                }
+            } catch (geminiError) {
+                console.error("Gemini fetch error:", geminiError)
             }
         }
 
