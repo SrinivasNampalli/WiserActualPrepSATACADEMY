@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, PlayCircle, FileText, ExternalLink, CheckCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { ContentSearch } from "./content-search"
 
 interface CourseProviderProps {
   courseProgress: any[]
@@ -70,6 +71,9 @@ export function CourseProvider({ courseProgress: initialProgress, userId }: Cour
 
   return (
     <div className="space-y-6">
+      {/* AI Content Search */}
+      <ContentSearch />
+
       {/* Course Categories */}
       <Card>
         <CardHeader>
@@ -91,9 +95,8 @@ export function CourseProvider({ courseProgress: initialProgress, userId }: Cour
                   <div
                     key={course.id}
                     onClick={() => selectCourse(course)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
-                    }`}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold line-clamp-2">{course.title}</h3>
@@ -127,9 +130,8 @@ export function CourseProvider({ courseProgress: initialProgress, userId }: Cour
                   <div
                     key={course.id}
                     onClick={() => selectCourse(course)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
-                    }`}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold line-clamp-2">{course.title}</h3>
@@ -147,9 +149,8 @@ export function CourseProvider({ courseProgress: initialProgress, userId }: Cour
                   <div
                     key={course.id}
                     onClick={() => selectCourse(course)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
-                    }`}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold line-clamp-2">{course.title}</h3>
@@ -167,9 +168,8 @@ export function CourseProvider({ courseProgress: initialProgress, userId }: Cour
                   <div
                     key={course.id}
                     onClick={() => selectCourse(course)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
-                    }`}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedCourse?.id === course.id ? "border-[#4ECDC4] bg-[#4ECDC4]/10" : "hover:border-gray-400"
+                      }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold line-clamp-2">{course.title}</h3>
