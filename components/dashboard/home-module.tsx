@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,7 +11,8 @@ import {
     Target,
     Sparkles,
     ChevronRight,
-    FileText
+    FileText,
+    X
 } from "lucide-react"
 
 interface HomeModuleProps {
@@ -36,6 +38,8 @@ const SAT_DATES = [
 
 export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [], userId }: HomeModuleProps) {
     const now = new Date()
+    const [selectedSummary, setSelectedSummary] = useState<any>(null)
+    const [showAllSummaries, setShowAllSummaries] = useState(false)
 
     // Get next upcoming SAT dates
     const upcomingDates = SAT_DATES.filter(d => d.date >= now).slice(0, 3)
@@ -58,9 +62,12 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
 
     return (
         <div className="space-y-6">
-            {/* Quick Stats Row - Using theme colors */}
+            {/* Quick Stats Row - Using inline styles for theme */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
+                <Card
+                    className="text-white border-0"
+                    style={{ background: 'linear-gradient(to bottom right, var(--theme-base), var(--theme-dark))' }}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -72,7 +79,10 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
+                <Card
+                    className="text-white border-0"
+                    style={{ background: 'linear-gradient(to bottom right, var(--theme-base), var(--theme-dark))' }}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -84,7 +94,10 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
+                <Card
+                    className="text-white border-0"
+                    style={{ background: 'linear-gradient(to bottom right, var(--theme-base), var(--theme-dark))' }}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -96,7 +109,10 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
+                <Card
+                    className="text-white border-0"
+                    style={{ background: 'linear-gradient(to bottom right, var(--theme-base), var(--theme-dark))' }}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -130,8 +146,13 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-theme-base text-white' : 'bg-gray-200 text-gray-600'
-                                                }`}>
+                                            <div
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                                style={{
+                                                    backgroundColor: i === 0 ? 'var(--theme-base)' : '#e5e7eb',
+                                                    color: i === 0 ? 'white' : '#4b5563'
+                                                }}
+                                            >
                                                 <Calendar className="h-5 w-5" />
                                             </div>
                                             <div>
@@ -140,7 +161,7 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                                             </div>
                                         </div>
                                         {i === 0 && (
-                                            <Badge className="bg-theme-base text-white">Next</Badge>
+                                            <Badge style={{ backgroundColor: 'var(--theme-base)' }} className="text-white">Next</Badge>
                                         )}
                                     </div>
                                 )
@@ -157,9 +178,16 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                                 <FileText className="h-5 w-5 text-theme" />
                                 <CardTitle>Recent Summaries</CardTitle>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-theme">
-                                View All <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
+                            {recentSummaries.length > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-theme"
+                                    onClick={() => setShowAllSummaries(true)}
+                                >
+                                    View All <ChevronRight className="h-4 w-4 ml-1" />
+                                </Button>
+                            )}
                         </div>
                         <CardDescription>Your AI-generated study summaries</CardDescription>
                     </CardHeader>
@@ -170,6 +198,7 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                                     <div
                                         key={summary.id}
                                         className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                        onClick={() => setSelectedSummary(summary)}
                                     >
                                         <p className="font-medium text-gray-800 truncate">
                                             {summary.original_text?.substring(0, 60) || "Untitled Summary"}...
@@ -190,6 +219,68 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Summary Detail Modal */}
+            {selectedSummary && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedSummary(null)}>
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 border-b">
+                            <h3 className="font-semibold text-lg">Summary Details</h3>
+                            <Button variant="ghost" size="icon" onClick={() => setSelectedSummary(null)}>
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                        <div className="p-4 overflow-y-auto max-h-[calc(80vh-120px)]">
+                            <div className="mb-4">
+                                <p className="text-sm text-gray-500 mb-1">Original Text</p>
+                                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedSummary.original_text}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 mb-1">AI Summary</p>
+                                <p className="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{selectedSummary.summarized_text}</p>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t">
+                            <p className="text-xs text-gray-400">
+                                Created: {new Date(selectedSummary.created_at).toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View All Summaries Modal */}
+            {showAllSummaries && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowAllSummaries(false)}>
+                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 border-b">
+                            <h3 className="font-semibold text-lg">All Summaries ({summarizerHistory.length})</h3>
+                            <Button variant="ghost" size="icon" onClick={() => setShowAllSummaries(false)}>
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                        <div className="p-4 overflow-y-auto max-h-[calc(80vh-80px)] space-y-3">
+                            {summarizerHistory.map((summary: any) => (
+                                <div
+                                    key={summary.id}
+                                    className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                                    onClick={() => {
+                                        setShowAllSummaries(false)
+                                        setSelectedSummary(summary)
+                                    }}
+                                >
+                                    <p className="font-medium text-gray-800">
+                                        {summary.original_text?.substring(0, 80) || "Untitled"}...
+                                    </p>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {new Date(summary.created_at).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
