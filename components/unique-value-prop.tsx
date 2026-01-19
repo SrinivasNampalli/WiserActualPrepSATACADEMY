@@ -208,7 +208,7 @@ export function UniqueValueProp() {
                                     <tr className="bg-[#1B4B6B] text-white">
                                         <th className="text-left p-4 font-semibold">Feature</th>
                                         <th className="p-4 text-center bg-theme">
-                                            <div className="font-bold">ScoreBoost</div>
+                                            <div className="font-bold">WiserPrep</div>
                                             <div className="text-xs opacity-80">That's us</div>
                                         </th>
                                         <th className="p-4 text-center">Khan Academy</th>

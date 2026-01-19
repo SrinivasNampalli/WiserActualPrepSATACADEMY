@@ -116,7 +116,7 @@ export default function PricingPage() {
         <div className="mb-16">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-white mb-3">How We Compare</h2>
-            <p className="text-white/70">See why students choose ScoreBoost over expensive alternatives</p>
+            <p className="text-white/70">See why students choose WiserPrep over expensive alternatives</p>
           </div>
 
           <Card className="overflow-hidden">
@@ -126,7 +126,7 @@ export default function PricingPage() {
                   <tr className="bg-gray-50 border-b">
                     <th className="text-left p-4 font-semibold text-gray-700">Feature</th>
                     <th className="p-4 text-center">
-                      <div className="font-bold text-theme">ScoreBoost</div>
+                      <div className="font-bold text-theme">WiserPrep</div>
                       <div className="text-xs text-gray-500">Premium</div>
                     </th>
                     <th className="p-4 text-center">

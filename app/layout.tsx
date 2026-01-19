@@ -10,7 +10,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ScoreBoost SAT Prep - Guaranteed 200+ Point Increase",
+  title: "WiserPrep SAT Prep - Guaranteed 200+ Point Increase",
   description:
     "AI-powered SAT prep that adapts to you. Join 50,000+ students who boosted their scores with personalized learning.",
   generator: "v0.app",

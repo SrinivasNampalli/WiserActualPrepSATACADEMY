@@ -135,26 +135,26 @@ export function QuizAIChatbox({
                 </button>
             )}
 
-            {/* Chatbox Panel */}
+            {/* Chatbox Panel - Made wider and more prominent */}
             <div
                 className={cn(
-                    "fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-[55] transition-transform duration-300 flex flex-col border-l border-gray-200",
+                    "fixed right-0 top-0 h-full w-[420px] max-w-[95vw] bg-white shadow-2xl z-[55] transition-transform duration-300 flex flex-col border-l-4 border-pink-400",
                     isOpen ? "translate-x-0" : "translate-x-full"
                 )}
             >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-[#0D2240] to-[#1a3a5c] px-4 py-4 flex items-center justify-between">
+                {/* Header with larger close button */}
+                <div className="bg-gradient-to-r from-[#0D2240] to-[#1a3a5c] px-4 py-4 flex items-center justify-between sticky top-0 z-10">
                     <div className="flex items-center gap-2 text-white">
                         <Sparkles className="w-5 h-5 text-amber-400" />
                         <h3 className="font-semibold">AI Study Helper</h3>
                     </div>
                     <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={handleClose}
-                        className="text-white/70 hover:text-white hover:bg-white/10"
+                        className="text-white hover:text-white hover:bg-red-500 w-10 h-10 rounded-full"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-6 h-6" />
                     </Button>
                 </div>
 

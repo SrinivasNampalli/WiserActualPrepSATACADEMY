@@ -19,7 +19,7 @@ const caseStudies = [
         afterScore: 1520,
         improvement: 340,
         studyWeeks: 12,
-        quote: "I was stuck at 1180 for months. ScoreBoost's AI identified my weak areas in reading comprehension and created a targeted plan. The improvement was incredible.",
+        quote: "I was stuck at 1180 for months. WiserPrep's AI identified my weak areas in reading comprehension and created a targeted plan. The improvement was incredible.",
         categories: {
             math: { before: 580, after: 780 },
             reading: { before: 600, after: 740 }
@@ -70,7 +70,7 @@ const caseStudies = [
         afterScore: 1540,
         improvement: 220,
         studyWeeks: 6,
-        quote: "With only 6 weeks until my test, I was desperate. ScoreBoost's intensive plan focused exactly on what I needed. Improved 220 points!",
+        quote: "With only 6 weeks until my test, I was desperate. WiserPrep's intensive plan focused exactly on what I needed. Improved 220 points!",
         categories: {
             math: { before: 700, after: 780 },
             reading: { before: 620, after: 760 }
