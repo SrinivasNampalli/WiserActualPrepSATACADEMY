@@ -24,6 +24,34 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
   const [summarizerHistory, setSummarizerHistory] = useState(initialHistory)
   const [error, setError] = useState<string | null>(null)
 
+  // Render markdown-style formatting (bold, bullets)
+  const renderMarkdown = (text: string) => {
+    return text.split('\n').map((line, i) => {
+      // Handle bullet points
+      const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*')
+      const cleanLine = isBullet ? line.replace(/^[\s]*[•\-\*][\s]*/, '') : line
+
+      // Handle bold text (between **)
+      const parts = cleanLine.split(/(\*\*[^*]+\*\*)/g)
+      const formatted = parts.map((part, j) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={j} className="font-semibold text-[#1B4B6B]">{part.slice(2, -2)}</strong>
+        }
+        return <span key={j}>{part}</span>
+      })
+
+      if (isBullet) {
+        return (
+          <div key={i} className="flex items-start gap-2 mb-1">
+            <span className="text-[#4ECDC4] font-bold">•</span>
+            <span>{formatted}</span>
+          </div>
+        )
+      }
+      return <div key={i} className="mb-1">{formatted}</div>
+    })
+  }
+
   const handleSummarize = async () => {
     if (!inputText.trim()) return
 
@@ -134,7 +162,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-sm whitespace-pre-wrap text-gray-700">{summary}</p>
+              <div className="text-sm text-gray-700">{renderMarkdown(summary)}</div>
             </div>
           )}
         </CardContent>
