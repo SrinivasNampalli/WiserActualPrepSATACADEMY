@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { SecretAdminDashboard } from "@/components/admin/secret-admin-dashboard"
 
 // Helper to verify admin session
@@ -36,7 +36,7 @@ export default async function SecretAdminDashboardPage() {
     }
 
     // Fetch data for admin dashboard
-    const supabase = await createServerClient()
+    const supabase = createAdminClient()
 
     // Fetch all tests
     const { data: tests } = await supabase
