@@ -127,8 +127,8 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
           </Button>
 
           {summary && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-2">
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-80 overflow-auto">
+              <div className="flex items-center justify-between mb-2 sticky top-0 bg-gray-50">
                 <h4 className="font-semibold text-[#1B4B6B]">AI Summary</h4>
                 <Button variant="ghost" size="sm" onClick={copyToClipboard}>
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}

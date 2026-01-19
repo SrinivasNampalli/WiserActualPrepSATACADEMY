@@ -6,14 +6,12 @@ import { Button } from "@/components/ui/button"
 import {
     Calendar,
     TrendingUp,
-    BookOpen,
     Clock,
     Target,
     Sparkles,
     ChevronRight,
     FileText
 } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 interface HomeModuleProps {
     testResults: any[]
@@ -37,7 +35,6 @@ const SAT_DATES = [
 ]
 
 export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [], userId }: HomeModuleProps) {
-    const router = useRouter()
     const now = new Date()
 
     // Get next upcoming SAT dates
@@ -61,52 +58,52 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
 
     return (
         <div className="space-y-6">
-            {/* Quick Stats Row */}
+            {/* Quick Stats Row - Using theme colors */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-blue-100 text-sm">Tests Completed</p>
+                                <p className="text-white/80 text-sm">Tests Completed</p>
                                 <p className="text-3xl font-bold">{totalTests}</p>
                             </div>
-                            <Target className="h-10 w-10 text-blue-200" />
+                            <Target className="h-10 w-10 text-white/60" />
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
+                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-emerald-100 text-sm">Best Score</p>
+                                <p className="text-white/80 text-sm">Best Score</p>
                                 <p className="text-3xl font-bold">{bestScore}%</p>
                             </div>
-                            <TrendingUp className="h-10 w-10 text-emerald-200" />
+                            <TrendingUp className="h-10 w-10 text-white/60" />
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-purple-100 text-sm">AI Summaries</p>
+                                <p className="text-white/80 text-sm">AI Summaries</p>
                                 <p className="text-3xl font-bold">{totalSummaries}</p>
                             </div>
-                            <Sparkles className="h-10 w-10 text-purple-200" />
+                            <Sparkles className="h-10 w-10 text-white/60" />
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+                <Card className="bg-gradient-to-br from-theme-base to-theme-dark text-white border-0">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-orange-100 text-sm">Days Until SAT</p>
+                                <p className="text-white/80 text-sm">Days Until SAT</p>
                                 <p className="text-3xl font-bold">{daysUntilSAT ?? "—"}</p>
                             </div>
-                            <Clock className="h-10 w-10 text-orange-200" />
+                            <Clock className="h-10 w-10 text-white/60" />
                         </div>
                     </CardContent>
                 </Card>
@@ -175,7 +172,7 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                                         className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                                     >
                                         <p className="font-medium text-gray-800 truncate">
-                                            {summary.topic || summary.input_text?.substring(0, 50) + "..."}
+                                            {summary.original_text?.substring(0, 60) || "Untitled Summary"}...
                                         </p>
                                         <p className="text-sm text-gray-500">
                                             {new Date(summary.created_at).toLocaleDateString()}
@@ -193,50 +190,6 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                     </CardContent>
                 </Card>
             </div>
-
-            {/* Quick Actions */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>Jump into your study session</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Button
-                            variant="outline"
-                            className="h-24 flex-col gap-2 hover:bg-theme-base/10 hover:border-theme-base"
-                            onClick={() => { }}
-                        >
-                            <Target className="h-6 w-6 text-theme" />
-                            <span>Take a Test</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-24 flex-col gap-2 hover:bg-purple-50 hover:border-purple-400"
-                            onClick={() => { }}
-                        >
-                            <Sparkles className="h-6 w-6 text-purple-500" />
-                            <span>AI Summarize</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-24 flex-col gap-2 hover:bg-emerald-50 hover:border-emerald-400"
-                            onClick={() => { }}
-                        >
-                            <BookOpen className="h-6 w-6 text-emerald-500" />
-                            <span>Flashcards</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-24 flex-col gap-2 hover:bg-blue-50 hover:border-blue-400"
-                            onClick={() => { }}
-                        >
-                            <TrendingUp className="h-6 w-6 text-blue-500" />
-                            <span>View Progress</span>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     )
 }
