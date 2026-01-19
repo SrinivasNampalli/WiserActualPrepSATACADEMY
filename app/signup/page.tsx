@@ -42,7 +42,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: name,
           },
@@ -113,7 +113,7 @@ export default function SignupPage() {
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button
               type="submit"
-              className="w-full bg-[#4ECDC4] hover:bg-[#45b8b0] text-[#0A2540]"
+              className="w-full bg-theme-base hover:bg-theme-dark text-white"
               disabled={isLoading}
             >
               {isLoading ? "Creating account..." : "Create Account"}
@@ -123,7 +123,7 @@ export default function SignupPage() {
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#4ECDC4] hover:underline">
+            <Link href="/login" className="text-theme hover:underline">
               Sign in
             </Link>
           </div>
