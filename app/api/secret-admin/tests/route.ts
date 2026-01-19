@@ -186,3 +186,38 @@ export async function DELETE(request: Request) {
     }
 }
 
+// Update test (visibility toggle)
+export async function PATCH(request: Request) {
+    const isAuthenticated = await verifyAdminSession()
+    if (!isAuthenticated) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    try {
+        const body = await request.json()
+        const { id, is_public } = body
+
+        if (!id) {
+            return NextResponse.json({ error: "Test ID required" }, { status: 400 })
+        }
+
+        const supabase = createAdminClient()
+
+        const { data, error } = await supabase
+            .from("tests")
+            .update({ is_public })
+            .eq("id", id)
+            .select()
+            .single()
+
+        if (error) {
+            console.error("[Admin API] Update test error:", error)
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        return NextResponse.json({ success: true, data })
+    } catch (error: any) {
+        console.error("[Admin API] Update test error:", error)
+        return NextResponse.json({ error: error?.message || "Failed to update test" }, { status: 500 })
+    }
+}

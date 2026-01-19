@@ -23,6 +23,7 @@ import {
     Check,
     X,
     Eye,
+    EyeOff,
     ChevronDown,
     ChevronUp,
     ImagePlus,
@@ -52,13 +53,14 @@ interface ParsedQuestion {
 
 export function SecretAdminDashboard({
     tests: initialTests,
-    users,
+    users: initialUsers,
     questions: initialQuestions,
     quizzes: initialQuizzes,
 }: SecretAdminDashboardProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = useState("tests")
     const [tests, setTests] = useState(initialTests)
+    const [users, setUsers] = useState(initialUsers)
     const [questions, setQuestions] = useState(initialQuestions)
     const [quizzes, setQuizzes] = useState(initialQuizzes)
     const [searchTerm, setSearchTerm] = useState("")
@@ -71,6 +73,7 @@ export function SecretAdminDashboard({
         title: "",
         total_questions: 40,
         duration_minutes: 60,
+        is_public: false, // Start as draft (private)
     })
 
     // Question parser state
@@ -128,6 +131,7 @@ export function SecretAdminDashboard({
                     title: "",
                     total_questions: 40,
                     duration_minutes: 60,
+                    is_public: false,
                 })
             } else {
                 alert("Failed to create test: " + (result.error || "Unknown error"))
@@ -163,6 +167,52 @@ export function SecretAdminDashboard({
         }
     }
 
+    // Delete user
+    const handleDeleteUser = async (userId: string, userEmail: string) => {
+        if (!confirm(`Are you sure you want to delete user "${userEmail}"? This action cannot be undone.`)) return
+
+        try {
+            const response = await fetch(`/api/secret-admin/users?id=${userId}`, {
+                method: "DELETE",
+            })
+
+            const result = await response.json()
+
+            if (result.success) {
+                setUsers(users.filter((u) => u.id !== userId))
+            } else {
+                alert("Failed to delete user: " + (result.error || "Unknown error"))
+            }
+        } catch (error) {
+            console.error("Delete user error:", error)
+            alert("Failed to delete user")
+        }
+    }
+
+    // Toggle test visibility (public/private)
+    const handleToggleTestVisibility = async (testId: string, currentlyPublic: boolean) => {
+        try {
+            const response = await fetch(`/api/secret-admin/tests`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: testId, is_public: !currentlyPublic }),
+            })
+
+            const result = await response.json()
+
+            if (result.success) {
+                setTests(tests.map((t) =>
+                    t.id === testId ? { ...t, is_public: !currentlyPublic } : t
+                ))
+            } else {
+                alert("Failed to update visibility: " + (result.error || "Unknown error"))
+            }
+        } catch (error) {
+            console.error("Toggle visibility error:", error)
+            alert("Failed to update visibility")
+        }
+    }
+
     // Parse questions from pasted text
     const parseQuestions = () => {
         setParseError("")
@@ -174,9 +224,10 @@ export function SecretAdminDashboard({
         }
 
         try {
-            // Split by double newline or numbered questions
+            // For SAT-style questions, we need to keep the full passage with the question
+            // Split only when we see a clear question number pattern at start of line
             const questionBlocks = rawQuestionInput
-                .split(/\n\s*\n|\n(?=\d+[\.\)]\s)/)
+                .split(/\n(?=\d+[\.\)]\s)/) // Only split on numbered questions (1. or 1))
                 .filter((block) => block.trim())
 
             const parsed: ParsedQuestion[] = []
@@ -186,29 +237,26 @@ export function SecretAdminDashboard({
 
                 if (lines.length < 5) continue // Need at least question + 4 options
 
-                // Extract question text (first line or lines before options)
-                let questionText = ""
-                let optionStartIndex = 0
-
+                // Find where options start (A. B. C. D.)
+                let optionStartIndex = -1
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim()
-                    // Check if this line starts an option
-                    if (/^[A-Da-d][\.\)\:]/.test(line) || /^\(?[A-Da-d]\)?[\.\:\s]/.test(line)) {
+                    // Check if this line starts option A (first option)
+                    if (/^[Aa][\.\)\:]/i.test(line) || /^\(?[Aa]\)?[\.\:\s]/i.test(line)) {
                         optionStartIndex = i
                         break
                     }
-                    // Remove leading question number if present
-                    const cleanedLine = line.replace(/^\d+[\.\)]\s*/, "")
-                    questionText += (questionText ? " " : "") + cleanedLine
                 }
 
-                if (!questionText || optionStartIndex === 0) {
-                    // Try alternative parsing - question might be numbered
-                    questionText = lines[0].replace(/^\d+[\.\)]\s*/, "").trim()
-                    optionStartIndex = 1
-                }
+                if (optionStartIndex === -1 || optionStartIndex < 1) continue
 
-                // Extract options
+                // ALL lines before options are the question text (includes passage + question)
+                const questionLines = lines.slice(0, optionStartIndex)
+                let questionText = questionLines
+                    .map(line => line.replace(/^\d+[\.\)]\s*/, "").trim()) // Remove leading numbers
+                    .join("\n") // Keep newlines for readability
+
+                // Extract options (A, B, C, D)
                 const optionLines = lines.slice(optionStartIndex)
                 const options: string[] = []
 
@@ -220,9 +268,9 @@ export function SecretAdminDashboard({
                     }
                 }
 
-                if (options.length >= 4) {
+                if (options.length >= 4 && questionText.trim()) {
                     parsed.push({
-                        question_text: questionText,
+                        question_text: questionText.trim(),
                         options: [options[0], options[1], options[2], options[3]],
                         correct_answer: "A",
                         category: questionCategory,
@@ -232,8 +280,45 @@ export function SecretAdminDashboard({
                 }
             }
 
+            // If no numbered questions found, try parsing the whole input as a single question
             if (parsed.length === 0) {
-                setParseError("Could not parse any questions. Make sure format is:\n\nQuestion text\nA. Option 1\nB. Option 2\nC. Option 3\nD. Option 4")
+                const lines = rawQuestionInput.trim().split("\n").filter((l) => l.trim())
+
+                let optionStartIndex = -1
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim()
+                    if (/^[Aa][\.\)\:]/i.test(line) || /^\(?[Aa]\)?[\.\:\s]/i.test(line)) {
+                        optionStartIndex = i
+                        break
+                    }
+                }
+
+                if (optionStartIndex > 0) {
+                    const questionText = lines.slice(0, optionStartIndex).join("\n").trim()
+                    const options: string[] = []
+
+                    for (const line of lines.slice(optionStartIndex)) {
+                        const optionMatch = line.match(/^[\(\s]*([A-Da-d])[\.\)\:\s]+(.+)$/i)
+                        if (optionMatch) {
+                            options.push(optionMatch[2].trim())
+                        }
+                    }
+
+                    if (options.length >= 4 && questionText) {
+                        parsed.push({
+                            question_text: questionText,
+                            options: [options[0], options[1], options[2], options[3]],
+                            correct_answer: "A",
+                            category: questionCategory,
+                            difficulty: questionDifficulty,
+                            question_type: "multiple_choice",
+                        })
+                    }
+                }
+            }
+
+            if (parsed.length === 0) {
+                setParseError("Could not parse any questions. Make sure format includes:\n\n[Passage text]\nQuestion text\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4")
                 return
             }
 
@@ -731,16 +816,28 @@ export function SecretAdminDashboard({
                                                         <Badge className="bg-gray-700 text-gray-300 capitalize">{test.test_type}</Badge>
                                                         <Badge className="bg-gray-700 text-gray-300">{test.total_questions} questions</Badge>
                                                         <Badge className="bg-gray-700 text-gray-300">{test.duration_minutes} min</Badge>
+                                                        <Badge className={test.is_public ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'}>
+                                                            {test.is_public ? 'Public' : 'Draft'}
+                                                        </Badge>
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
+                                                        onClick={() => handleToggleTestVisibility(test.id, test.is_public)}
+                                                        className={test.is_public ? 'text-green-400 hover:text-green-300' : 'text-yellow-400 hover:text-yellow-300'}
+                                                        title={test.is_public ? 'Make Draft' : 'Make Public'}
+                                                    >
+                                                        {test.is_public ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
                                                         onClick={() => loadTestQuestions(test.id)}
                                                         className="text-gray-400 hover:text-white"
                                                     >
-                                                        <Eye className="h-4 w-4 mr-1" />
+                                                        <FileText className="h-4 w-4 mr-1" />
                                                         {expandedTest === test.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                                     </Button>
                                                     <Button
@@ -1266,11 +1363,19 @@ A) Him and I went...
                                                         <CardDescription className="text-gray-400">{user.email}</CardDescription>
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-2">
+                                                <div className="flex items-center gap-2">
                                                     {user.is_admin && <Badge className="bg-purple-500/20 text-purple-300">Admin</Badge>}
                                                     <Badge className="bg-gray-700 text-gray-300">
                                                         {new Date(user.created_at).toLocaleDateString()}
                                                     </Badge>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDeleteUser(user.id, user.email)}
+                                                        className="text-red-400 hover:text-red-300 hover:bg-red-500/20 ml-2"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </CardHeader>
