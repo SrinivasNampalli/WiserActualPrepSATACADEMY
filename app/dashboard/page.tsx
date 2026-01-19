@@ -43,11 +43,13 @@ export default async function DashboardPage() {
     .limit(10)
 
   // Fetch available tests using admin client to bypass RLS
-  const { data: allTests } = await adminSupabase
+  const { data: allTests, error: testsError } = await adminSupabase
     .from("tests")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(50)
+
+  console.log("[Dashboard] Fetched tests:", allTests?.length || 0, "Error:", testsError?.message || "none")
 
   const availableTests = allTests || []
 
