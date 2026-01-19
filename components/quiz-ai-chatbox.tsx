@@ -160,42 +160,59 @@ export function QuizAIChatbox({
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {/* Question Context */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div className="flex items-center gap-2 text-blue-700 mb-2">
-                            <HelpCircle className="w-4 h-4" />
-                            <span className="text-sm font-medium">Current Question</span>
-                        </div>
-                        <p className="text-sm text-blue-900 line-clamp-3">
-                            {questionText.substring(0, 150)}
-                            {questionText.length > 150 && "..."}
-                        </p>
-                    </div>
 
                     {/* Messages */}
                     {messages.length === 0 ? (
-                        <div className="text-center py-8">
-                            <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500 text-sm mb-4">
-                                Need help understanding this question?
-                            </p>
-                            <Button
-                                onClick={handleGetHelp}
-                                disabled={isLoading}
-                                className="bg-[#0D2240] hover:bg-[#0D2240]/90 text-white"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Getting help...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="w-4 h-4 mr-2" />
-                                        Get AI Explanation
-                                    </>
+                        <div className="space-y-4">
+                            {/* Full Question Display */}
+                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                <p className="text-sm text-gray-800 whitespace-pre-wrap max-h-48 overflow-y-auto">
+                                    {questionText}
+                                </p>
+                                {options.length > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-gray-200 space-y-1">
+                                        {options.map((opt, idx) => (
+                                            <p key={idx} className="text-sm text-gray-600">
+                                                <span className="font-semibold">{String.fromCharCode(65 + idx)}.</span> {opt}
+                                            </p>
+                                        ))}
+                                    </div>
                                 )}
-                            </Button>
+                            </div>
+
+                            {/* Confirmation Prompt */}
+                            <div className="text-center py-4">
+                                <p className="text-gray-600 text-sm mb-4">
+                                    🤔 Need help with this question?
+                                </p>
+                                <div className="flex gap-3 justify-center">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleClose}
+                                        className="border-gray-300 text-gray-600"
+                                    >
+                                        No, I'm Good
+                                    </Button>
+                                    <Button
+                                        onClick={handleGetHelp}
+                                        disabled={isLoading}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Getting help...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="w-4 h-4 mr-2" />
+                                                Yes, Get Help!
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
