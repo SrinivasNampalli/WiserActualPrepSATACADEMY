@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -109,7 +109,7 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
     const { data } = await supabase.from("flashcards").select("*").eq("set_id", setId)
 
     if (data) {
-      setFlashcards(data.map((card) => ({ question: card.question, answer: card.answer })))
+      setFlashcards(data.map((card: { question: string; answer: string }) => ({ question: card.question, answer: card.answer })))
       setCurrentCardIndex(0)
       setIsFlipped(false)
     }
@@ -129,13 +129,18 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
     }
   }
 
+  // Load saved sets on mount
+  useEffect(() => {
+    loadSavedSets()
+  }, [userId])
+
   return (
     <div className="space-y-6">
       {/* Generator Form */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#4ECDC4]" />
+            <Sparkles className="h-5 w-5 text-theme" />
             <CardTitle>AI Flashcard Generator</CardTitle>
           </div>
           <CardDescription>Generate AP-level flashcards for any topic using Gemini AI</CardDescription>
@@ -182,7 +187,7 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
             <Button
               onClick={generateFlashcards}
               disabled={isGenerating || !topic.trim()}
-              className="bg-[#4ECDC4] hover:bg-[#3db8b0] text-[#0A2540]"
+              className="bg-theme-base hover:bg-theme-dark text-white"
             >
               {isGenerating ? (
                 <>
@@ -230,13 +235,12 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
             {/* Flashcard */}
             <div onClick={() => setIsFlipped(!isFlipped)} className="relative h-80 cursor-pointer perspective-1000">
               <div
-                className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
-                  isFlipped ? "rotate-y-180" : ""
-                }`}
+                className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""
+                  }`}
               >
                 {/* Front (Question) */}
                 <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#1B4B6B] to-[#0A2540] rounded-lg p-8 flex flex-col items-center justify-center text-center">
-                  <Badge className="mb-4 bg-[#4ECDC4] text-[#0A2540]">Question</Badge>
+                  <Badge className="mb-4 bg-theme-base text-white">Question</Badge>
                   <p className="text-white text-2xl font-medium leading-relaxed">
                     {flashcards[currentCardIndex].question}
                   </p>
@@ -244,7 +248,7 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
                 </div>
 
                 {/* Back (Answer) */}
-                <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#4ECDC4] to-[#3db8b0] rounded-lg p-8 flex flex-col items-center justify-center text-center rotate-y-180">
+                <div className="absolute w-full h-full backface-hidden bg-theme rounded-lg p-8 flex flex-col items-center justify-center text-center rotate-y-180">
                   <Badge className="mb-4 bg-[#0A2540] text-white">Answer</Badge>
                   <p className="text-[#0A2540] text-xl font-medium leading-relaxed">
                     {flashcards[currentCardIndex].answer}
@@ -278,7 +282,7 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
             {/* Progress Bar */}
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className="bg-[#4ECDC4] h-2 rounded-full transition-all"
+                className="bg-theme-base h-2 rounded-full transition-all"
                 style={{ width: `${((currentCardIndex + 1) / flashcards.length) * 100}%` }}
               />
             </div>
@@ -286,21 +290,33 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
         </Card>
       )}
 
-      {/* Cost Info */}
-      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-green-600 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-semibold text-green-900">Cost-Optimized AI</p>
-              <p className="text-sm text-green-700">
-                Using Gemini 1.5 Flash 8B - the most affordable model with fast, direct responses for efficient
-                flashcard generation.
-              </p>
+      {/* Saved Flashcard Sets */}
+      {savedSets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Your Saved Sets</CardTitle>
+            <CardDescription>Click to load a previously saved flashcard set</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {savedSets.map((set) => (
+                <button
+                  key={set.id}
+                  onClick={() => loadFlashcardSet(set.id)}
+                  className="p-4 rounded-lg border border-gray-200 hover:border-theme-base hover:bg-theme-base/5 transition-all text-left group"
+                >
+                  <p className="font-medium text-gray-800 group-hover:text-theme-dark truncate">
+                    {set.title || set.topic}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {set.course_level} • {new Date(set.created_at).toLocaleDateString()}
+                  </p>
+                </button>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
