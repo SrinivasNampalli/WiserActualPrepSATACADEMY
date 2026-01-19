@@ -3,9 +3,10 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Check } from "lucide-react"
+import { ArrowRight, Check, Zap, Clock } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { SATCountdown } from "@/components/sat-countdown"
 
 function useInView(ref: React.RefObject<HTMLElement | null>, options?: IntersectionObserverInit) {
   const [isInView, setIsInView] = useState(false)
@@ -28,7 +29,7 @@ function useInView(ref: React.RefObject<HTMLElement | null>, options?: Intersect
   return isInView
 }
 
-const benefits = ["7-day free trial", "200+ point guarantee", "Cancel anytime", "24/7 AI support"]
+const benefits = ["7-day free trial", "200+ point guarantee", "Cancel anytime", "AI tutoring 24/7"]
 
 export function FinalCTA() {
   const ref = useRef<HTMLDivElement>(null)
@@ -52,23 +53,27 @@ export function FinalCTA() {
 
       <div className="relative mx-auto max-w-4xl px-6 text-center">
         <div
-          className={`transition-all duration-700 ${
-            isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-          }`}
+          className={`transition-all duration-700 ${isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+            }`}
         >
           <h2 className="text-4xl font-bold text-[#1b4965] md:text-5xl lg:text-6xl">
-            <span className="text-balance">Your future self will thank you.</span>
+            <span className="text-balance">Don't wait until it's too late.</span>
           </h2>
+
+          {/* SAT Countdown */}
+          <div className="mt-6">
+            <SATCountdown variant="card" />
+          </div>
+
           <p className="mx-auto mt-6 max-w-xl text-lg text-[#1b4965]/70 md:text-xl">
-            Every day you wait is a day of potential improvement lost. Start now and see results within your first week.
+            Every day you delay is 3+ points you could have gained. Students who start now score <strong>200+ points higher</strong> on average.
           </p>
         </div>
 
         {/* CTA Card */}
         <div
-          className={`mx-auto mt-12 max-w-md rounded-3xl bg-[#1b4965] p-8 shadow-2xl transition-all duration-700 md:p-10 ${
-            isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-          }`}
+          className={`mx-auto mt-12 max-w-md rounded-3xl bg-[#1b4965] p-8 shadow-2xl transition-all duration-700 md:p-10 ${isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+            }`}
           style={{ transitionDelay: "200ms" }}
         >
           <p className="text-sm font-medium uppercase tracking-wider text-[#bee9e8]">Start Your Journey</p>
@@ -77,7 +82,8 @@ export function FinalCTA() {
 
           <Link href="/signup">
             <Button className="group mt-8 w-full rounded-xl bg-[#bee9e8] py-7 text-lg font-semibold text-[#1b4965] transition-all hover:bg-white">
-              Start Free Trial
+              <Zap className="h-5 w-5 mr-2" />
+              Start Improving Today
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
@@ -94,9 +100,8 @@ export function FinalCTA() {
         </div>
 
         <div
-          className={`mt-16 transition-all duration-700 ${
-            isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-          }`}
+          className={`mt-16 transition-all duration-700 ${isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+            }`}
           style={{ transitionDelay: "600ms" }}
         >
           <p className="text-sm font-medium uppercase tracking-wider text-[#1b4965]/60 mb-6">
@@ -132,9 +137,8 @@ export function FinalCTA() {
 
         {/* Trust indicators */}
         <p
-          className={`mt-12 text-sm text-[#1b4965]/50 transition-all duration-700 ${
-            isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-          }`}
+          className={`mt-12 text-sm text-[#1b4965]/50 transition-all duration-700 ${isInView ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+            }`}
           style={{ transitionDelay: "400ms" }}
         >
           Trusted by students from Harvard, Stanford, MIT, and 500+ top universities

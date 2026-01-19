@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json()
-        const { title, test_type, total_questions, duration_minutes } = body
+        const { title, test_type, subject, total_questions, duration_minutes } = body
 
         const supabase = createAdminClient()
 
@@ -102,7 +102,8 @@ export async function POST(request: Request) {
             .from("tests")
             .insert({
                 title,
-                test_type,
+                test_type: subject ? `${subject}_${test_type}` : test_type, // Combine subject with test_type for backwards compat
+                subject: subject || "full", // Store subject separately too
                 total_questions,
                 duration_minutes,
                 user_id: firstUser.id,

@@ -119,6 +119,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -141,10 +142,12 @@ html {
 
 /* Custom animations */
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -156,10 +159,12 @@ html {
 
 /* Added bounce animation for scroll indicator */
 @keyframes bounce {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(8px);
   }
@@ -167,6 +172,21 @@ html {
 
 .animate-bounce {
   animation: bounce 1.5s ease-in-out infinite;
+}
+
+/* Shimmer animation for urgency banners */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }
 
 /* Added tabular-nums for consistent number widths in counters */
@@ -179,6 +199,7 @@ html {
   from {
     stroke-dashoffset: 1000;
   }
+
   to {
     stroke-dashoffset: 0;
   }
@@ -257,12 +278,60 @@ html {
   background-color: var(--theme-base);
 }
 
+.bg-theme-dark {
+  background-color: var(--theme-dark);
+}
+
+.bg-theme-light {
+  background-color: var(--theme-light);
+}
+
+/* Hover variants */
+.hover\:bg-theme-dark:hover {
+  background-color: var(--theme-dark);
+}
+
+.hover\:bg-theme-light:hover {
+  background-color: var(--theme-light);
+}
+
+/* Text colors */
 .text-theme {
   color: var(--theme-base);
 }
 
+.text-theme-dark {
+  color: var(--theme-dark);
+}
+
+/* Border colors */
 .border-theme {
   border-color: var(--theme-base);
+}
+
+.border-theme-dark {
+  border-color: var(--theme-dark);
+}
+
+/* Opacity variants */
+.bg-theme-base\/5 {
+  background-color: color-mix(in srgb, var(--theme-base) 5%, transparent);
+}
+
+.bg-theme-base\/10 {
+  background-color: color-mix(in srgb, var(--theme-base) 10%, transparent);
+}
+
+.bg-theme-base\/20 {
+  background-color: color-mix(in srgb, var(--theme-base) 20%, transparent);
+}
+
+.bg-theme-base\/50 {
+  background-color: color-mix(in srgb, var(--theme-base) 50%, transparent);
+}
+
+.border-theme\/50 {
+  border-color: color-mix(in srgb, var(--theme-base) 50%, transparent);
 }
 
 /* ========================================
@@ -271,15 +340,20 @@ html {
 
 /* Idle floating animation */
 @keyframes mascot-float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
+
   25% {
     transform: translateY(-4px) rotate(-1deg);
   }
+
   50% {
     transform: translateY(-8px) rotate(0deg);
   }
+
   75% {
     transform: translateY(-4px) rotate(1deg);
   }
@@ -291,15 +365,20 @@ html {
 
 /* Happy bouncing animation */
 @keyframes mascot-bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) scale(1);
   }
+
   25% {
     transform: translateY(-12px) scale(1.05);
   }
+
   50% {
     transform: translateY(0) scale(0.95);
   }
+
   75% {
     transform: translateY(-6px) scale(1.02);
   }
@@ -311,9 +390,12 @@ html {
 
 /* Thinking tilt animation */
 @keyframes mascot-tilt {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: rotate(0deg) translateY(0);
   }
+
   50% {
     transform: rotate(10deg) translateY(-3px);
   }
@@ -325,24 +407,32 @@ html {
 
 /* Celebrating jump animation */
 @keyframes mascot-celebrate {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) scale(1) rotate(0deg);
   }
+
   10% {
     transform: translateY(-20px) scale(1.1) rotate(-5deg);
   }
+
   20% {
     transform: translateY(0) scale(0.9) rotate(5deg);
   }
+
   30% {
     transform: translateY(-15px) scale(1.05) rotate(-3deg);
   }
+
   40% {
     transform: translateY(0) scale(0.95) rotate(3deg);
   }
+
   50% {
     transform: translateY(-10px) scale(1.02) rotate(-2deg);
   }
+
   60% {
     transform: translateY(0) scale(1) rotate(0deg);
   }
@@ -354,9 +444,12 @@ html {
 
 /* Sad droop animation */
 @keyframes mascot-droop {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
+
   50% {
     transform: translateY(4px) rotate(-3deg);
   }
@@ -368,15 +461,20 @@ html {
 
 /* Encouraging wave animation */
 @keyframes mascot-wave {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
+
   25% {
     transform: translateY(-3px) rotate(3deg);
   }
+
   50% {
     transform: translateY(0) rotate(-3deg);
   }
+
   75% {
     transform: translateY(-3px) rotate(3deg);
   }
@@ -388,15 +486,20 @@ html {
 
 /* Hand wave for encouraging emotion */
 @keyframes mascot-hand-wave {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: rotate(0deg);
   }
+
   25% {
     transform: rotate(20deg);
   }
+
   50% {
     transform: rotate(-10deg);
   }
+
   75% {
     transform: rotate(20deg);
   }

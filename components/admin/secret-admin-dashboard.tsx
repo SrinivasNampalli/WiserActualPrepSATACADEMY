@@ -25,6 +25,10 @@ import {
     Eye,
     ChevronDown,
     ChevronUp,
+    ImagePlus,
+    Loader2,
+    FileUp,
+    Upload,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -42,6 +46,8 @@ interface ParsedQuestion {
     category: string
     difficulty: string
     question_type: string
+    image_url?: string
+    explanation?: string
 }
 
 export function SecretAdminDashboard({
@@ -61,6 +67,7 @@ export function SecretAdminDashboard({
     const [isCreatingTest, setIsCreatingTest] = useState(false)
     const [testFormData, setTestFormData] = useState({
         test_type: "practice",
+        subject: "math",
         title: "",
         total_questions: 40,
         duration_minutes: 60,
@@ -75,6 +82,24 @@ export function SecretAdminDashboard({
     const [questionDifficulty, setQuestionDifficulty] = useState("Medium")
     const [expandedTest, setExpandedTest] = useState<string | null>(null)
     const [testQuestions, setTestQuestions] = useState<Record<string, any[]>>({})
+
+    // PDF parsing state
+    const [pdfText, setPdfText] = useState("")
+    const [isParsingPdf, setIsParsingPdf] = useState(false)
+
+    // Manual question creation state
+    const [manualQuestion, setManualQuestion] = useState<ParsedQuestion>({
+        question_text: "",
+        options: ["", "", "", ""],
+        correct_answer: "A",
+        category: "Math",
+        difficulty: "Medium",
+        question_type: "multiple_choice",
+        image_url: "",
+        explanation: "",
+    })
+    const [manualImagePreview, setManualImagePreview] = useState<string | null>(null)
+    const [isUploadingImage, setIsUploadingImage] = useState(false)
 
     const handleLogout = async () => {
         await fetch("/api/secret-admin/logout", { method: "POST" })
@@ -99,6 +124,7 @@ export function SecretAdminDashboard({
                 setIsCreatingTest(false)
                 setTestFormData({
                     test_type: "practice",
+                    subject: "math",
                     title: "",
                     total_questions: 40,
                     duration_minutes: 60,
@@ -217,6 +243,142 @@ export function SecretAdminDashboard({
         }
     }
 
+    // Handle PDF file upload and extract text
+    const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+            setParseError("Please upload a PDF file")
+            return
+        }
+
+        // For now, we'll use a simple approach - extract text client-side
+        // In production, you'd want server-side PDF parsing
+        const reader = new FileReader()
+        reader.onload = async (event) => {
+            setParseError("")
+            // Since we can't parse PDF directly in browser without a library,
+            // we'll prompt user to paste the text
+            setParseError("PDF uploaded! Please copy the text from your PDF and paste it in the text area below, then click 'Parse PDF Text'.")
+        }
+        reader.readAsArrayBuffer(file)
+    }
+
+    // Parse questions from PDF text using AI
+    const parsePdfQuestions = async () => {
+        if (!pdfText.trim()) {
+            setParseError("Please paste the PDF text first")
+            return
+        }
+
+        setIsParsingPdf(true)
+        setParseError("")
+
+        try {
+            const response = await fetch("/api/secret-admin/parse-pdf", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pdfText: pdfText,
+                    category: questionCategory,
+                    difficulty: questionDifficulty,
+                }),
+            })
+
+            const result = await response.json()
+
+            if (result.success && result.questions) {
+                setParsedQuestions([...parsedQuestions, ...result.questions])
+                setPdfText("")
+                setParseError("")
+
+                if (result.questions.length === 0) {
+                    setParseError("No questions found. Make sure the text contains SAT-style questions.")
+                } else {
+                    alert(`Successfully parsed ${result.questions.length} questions!`)
+                }
+            } else {
+                setParseError("Failed to parse: " + (result.error || "Unknown error"))
+            }
+        } catch (error) {
+            console.error("PDF parsing error:", error)
+            setParseError("Failed to parse PDF text. Please try again.")
+        } finally {
+            setIsParsingPdf(false)
+        }
+    }
+
+    // Handle manual question image upload
+    const handleManualImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            setParseError("Please upload an image file")
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onload = async (event) => {
+            const imageData = event.target?.result as string
+            setManualImagePreview(imageData)
+            setIsUploadingImage(true)
+
+            try {
+                const response = await fetch("/api/secret-admin/upload-question-image", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        imageData: imageData,
+                        fileName: `q_${Date.now()}.${file.type.split('/')[1]}`,
+                    }),
+                })
+
+                const result = await response.json()
+
+                if (result.success && result.url) {
+                    setManualQuestion({ ...manualQuestion, image_url: result.url })
+                } else {
+                    setParseError("Failed to upload image: " + (result.error || "Unknown error"))
+                }
+            } catch (error) {
+                console.error("Image upload error:", error)
+                setParseError("Failed to upload image. Please try again.")
+            } finally {
+                setIsUploadingImage(false)
+            }
+        }
+        reader.readAsDataURL(file)
+    }
+
+    // Add manual question to parsed list
+    const addManualQuestion = () => {
+        if (!manualQuestion.question_text.trim()) {
+            setParseError("Please enter question text")
+            return
+        }
+        if (manualQuestion.options.some(opt => !opt.trim())) {
+            setParseError("Please fill in all 4 options")
+            return
+        }
+
+        setParsedQuestions([...parsedQuestions, { ...manualQuestion }])
+        // Reset form
+        setManualQuestion({
+            question_text: "",
+            options: ["", "", "", ""],
+            correct_answer: "A",
+            category: questionCategory,
+            difficulty: questionDifficulty,
+            question_type: "multiple_choice",
+            image_url: "",
+            explanation: "",
+        })
+        setManualImagePreview(null)
+        setParseError("")
+    }
+
     // Update a parsed question
     const updateParsedQuestion = (index: number, field: string, value: string, optionIndex?: number) => {
         const updated = [...parsedQuestions]
@@ -255,6 +417,8 @@ export function SecretAdminDashboard({
             category: q.category.toLowerCase(),
             difficulty: q.difficulty.toLowerCase(),
             question_type: "multiple_choice",
+            image_url: q.image_url || null,
+            explanation: q.explanation || null,
         }))
 
         try {
@@ -439,7 +603,7 @@ export function SecretAdminDashboard({
                             <div className="flex gap-2">
                                 <Button
                                     onClick={() => setIsCreatingTest(!isCreatingTest)}
-                                    className="bg-[#4ECDC4] hover:bg-[#3db8b0] text-gray-900"
+                                    className="bg-theme-base hover:bg-theme-dark text-white"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Test
@@ -479,7 +643,23 @@ export function SecretAdminDashboard({
                                             />
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div>
+                                                <Label className="text-gray-300">Subject</Label>
+                                                <Select
+                                                    value={testFormData.subject}
+                                                    onValueChange={(value) => setTestFormData({ ...testFormData, subject: value })}
+                                                >
+                                                    <SelectTrigger className="bg-gray-900 border-gray-600 text-white">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="math">Math</SelectItem>
+                                                        <SelectItem value="english">English</SelectItem>
+                                                        <SelectItem value="full">Full (Both)</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                             <div>
                                                 <Label className="text-gray-300">Test Type</Label>
                                                 <Select
@@ -517,7 +697,7 @@ export function SecretAdminDashboard({
                                         </div>
 
                                         <div className="flex gap-2">
-                                            <Button type="submit" className="bg-[#4ECDC4] hover:bg-[#3db8b0] text-gray-900">
+                                            <Button type="submit" className="bg-theme-base hover:bg-theme-dark text-white">
                                                 Create Test
                                             </Button>
                                             <Button type="button" variant="outline" onClick={() => setIsCreatingTest(false)} className="border-gray-600 text-gray-300">
@@ -544,7 +724,10 @@ export function SecretAdminDashboard({
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
                                                     <CardTitle className="text-lg text-white">{test.title}</CardTitle>
-                                                    <div className="flex gap-2 mt-2">
+                                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                                        <Badge className={`capitalize ${test.subject === 'math' ? 'bg-blue-600 text-white' : test.subject === 'english' ? 'bg-purple-600 text-white' : 'bg-emerald-600 text-white'}`}>
+                                                            {test.subject || 'full'}
+                                                        </Badge>
                                                         <Badge className="bg-gray-700 text-gray-300 capitalize">{test.test_type}</Badge>
                                                         <Badge className="bg-gray-700 text-gray-300">{test.total_questions} questions</Badge>
                                                         <Badge className="bg-gray-700 text-gray-300">{test.duration_minutes} min</Badge>
@@ -712,8 +895,223 @@ Next question...`}
                                     </div>
                                 )}
 
-                                <Button onClick={parseQuestions} className="bg-[#4ECDC4] hover:bg-[#3db8b0] text-gray-900">
+                                <Button onClick={parseQuestions} className="bg-theme-base hover:bg-theme-dark text-white">
                                     Parse Questions
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* PDF Upload Section */}
+                        <Card className="bg-gray-800 border-gray-700">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileUp className="h-5 w-5 text-[#4ECDC4]" />
+                                    Bulk Import from PDF / Google Docs
+                                </CardTitle>
+                                <CardDescription className="text-gray-400">
+                                    Copy text from your PDF or Google Doc and paste below to auto-parse questions
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <Textarea
+                                    value={pdfText}
+                                    onChange={(e) => setPdfText(e.target.value)}
+                                    placeholder="Paste your PDF text or Google Doc content here...
+
+Example format:
+1. What is 2 + 2?
+A) 3
+B) 4
+C) 5
+D) 6
+
+2. Which sentence is grammatically correct?
+A) Him and I went...
+..."
+                                    className="bg-gray-900 border-gray-600 text-white min-h-[200px] font-mono text-sm"
+                                />
+
+                                <Button
+                                    onClick={parsePdfQuestions}
+                                    disabled={isParsingPdf || !pdfText.trim()}
+                                    className="w-full bg-gradient-to-r from-[#4ECDC4] to-[#1B4B6B] hover:opacity-90 text-white"
+                                >
+                                    {isParsingPdf ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Parsing with AI...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FileUp className="h-4 w-4 mr-2" />
+                                            Parse PDF Text ({pdfText.split('\n').filter(l => l.trim()).length} lines)
+                                        </>
+                                    )}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Manual Question Creator */}
+                        <Card className="bg-gray-800 border-gray-700">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Plus className="h-5 w-5 text-[#4ECDC4]" />
+                                    Add Single Question
+                                </CardTitle>
+                                <CardDescription className="text-gray-400">
+                                    Manually create a question with optional image attachment
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Image Upload for Question */}
+                                <div>
+                                    <Label className="text-gray-300 mb-2 block">Question Image (Optional)</Label>
+                                    <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center hover:border-[#4ECDC4] transition-colors">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleManualImageUpload}
+                                            className="hidden"
+                                            id="manual-image-upload"
+                                        />
+                                        <label
+                                            htmlFor="manual-image-upload"
+                                            className="cursor-pointer flex flex-col items-center gap-2"
+                                        >
+                                            {manualImagePreview ? (
+                                                <div className="relative w-full">
+                                                    <img
+                                                        src={manualImagePreview}
+                                                        alt="Question image"
+                                                        className="max-h-32 mx-auto rounded"
+                                                    />
+                                                    {isUploadingImage && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
+                                                            <Loader2 className="h-6 w-6 animate-spin text-white" />
+                                                        </div>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            setManualImagePreview(null)
+                                                            setManualQuestion({ ...manualQuestion, image_url: "" })
+                                                        }}
+                                                        className="absolute top-0 right-0 text-red-400 hover:text-red-300"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Upload className="h-8 w-8 text-gray-500" />
+                                                    <span className="text-sm text-gray-400">
+                                                        Click to add an image (displays above question)
+                                                    </span>
+                                                </>
+                                            )}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Question Text */}
+                                <div>
+                                    <Label className="text-gray-300">Question Text</Label>
+                                    <Textarea
+                                        value={manualQuestion.question_text}
+                                        onChange={(e) => setManualQuestion({ ...manualQuestion, question_text: e.target.value })}
+                                        placeholder="Enter the question text..."
+                                        className="bg-gray-900 border-gray-600 text-white mt-1"
+                                        rows={3}
+                                    />
+                                </div>
+
+                                {/* Options */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {["A", "B", "C", "D"].map((letter, idx) => (
+                                        <div key={letter}>
+                                            <Label className="text-gray-300">Option {letter}</Label>
+                                            <Input
+                                                value={manualQuestion.options[idx]}
+                                                onChange={(e) => {
+                                                    const newOptions = [...manualQuestion.options]
+                                                    newOptions[idx] = e.target.value
+                                                    setManualQuestion({ ...manualQuestion, options: newOptions })
+                                                }}
+                                                placeholder={`Option ${letter}...`}
+                                                className="bg-gray-900 border-gray-600 text-white mt-1"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Correct Answer, Category, Difficulty */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <Label className="text-gray-300">Correct Answer</Label>
+                                        <Select
+                                            value={manualQuestion.correct_answer}
+                                            onValueChange={(v) => setManualQuestion({ ...manualQuestion, correct_answer: v })}
+                                        >
+                                            <SelectTrigger className="bg-gray-900 border-gray-600 text-white mt-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="A">A</SelectItem>
+                                                <SelectItem value="B">B</SelectItem>
+                                                <SelectItem value="C">C</SelectItem>
+                                                <SelectItem value="D">D</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label className="text-gray-300">Category</Label>
+                                        <Select
+                                            value={manualQuestion.category}
+                                            onValueChange={(v) => setManualQuestion({ ...manualQuestion, category: v })}
+                                        >
+                                            <SelectTrigger className="bg-gray-900 border-gray-600 text-white mt-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Math">Math</SelectItem>
+                                                <SelectItem value="Reading">Reading</SelectItem>
+                                                <SelectItem value="Writing">Writing</SelectItem>
+                                                <SelectItem value="Grammar">Grammar</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label className="text-gray-300">Difficulty</Label>
+                                        <Select
+                                            value={manualQuestion.difficulty}
+                                            onValueChange={(v) => setManualQuestion({ ...manualQuestion, difficulty: v })}
+                                        >
+                                            <SelectTrigger className="bg-gray-900 border-gray-600 text-white mt-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Easy">Easy</SelectItem>
+                                                <SelectItem value="Medium">Medium</SelectItem>
+                                                <SelectItem value="Hard">Hard</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {parseError && (
+                                    <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+                                        <p className="text-red-400 text-sm whitespace-pre-wrap">{parseError}</p>
+                                    </div>
+                                )}
+
+                                <Button
+                                    onClick={addManualQuestion}
+                                    className="w-full bg-theme-base hover:bg-theme-dark text-white"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Question to List
                                 </Button>
                             </CardContent>
                         </Card>
@@ -749,6 +1147,17 @@ Next question...`}
                                                     <X className="h-4 w-4" />
                                                 </Button>
                                             </div>
+
+                                            {/* Display question image if exists */}
+                                            {q.image_url && (
+                                                <div className="bg-gray-800 p-2 rounded-lg">
+                                                    <img
+                                                        src={q.image_url}
+                                                        alt={`Question ${index + 1} image`}
+                                                        className="max-h-48 mx-auto rounded object-contain"
+                                                    />
+                                                </div>
+                                            )}
 
                                             <Textarea
                                                 value={q.question_text}

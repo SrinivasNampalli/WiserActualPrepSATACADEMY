@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeContextProvider } from "@/lib/theme-context"
 import { MascotProvider } from "@/lib/mascot-context"
+import { SubscriptionProvider } from "@/lib/subscription-context"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -38,12 +39,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="theme-ocean">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased ${inter.className}`}>
         <ThemeContextProvider>
-          <MascotProvider>
-            {children}
-          </MascotProvider>
+          <SubscriptionProvider>
+            <MascotProvider>
+              {children}
+            </MascotProvider>
+          </SubscriptionProvider>
         </ThemeContextProvider>
         <Analytics />
       </body>

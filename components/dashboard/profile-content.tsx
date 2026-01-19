@@ -107,7 +107,7 @@ export function ProfileContent({
                 <Card className="mb-8">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-6">
-                            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-[#4ECDC4] to-[#1B4B6B] flex items-center justify-center">
+                            <div className="h-20 w-20 rounded-full bg-theme flex items-center justify-center">
                                 <User className="h-10 w-10 text-white" />
                             </div>
                             <div className="flex-1">
@@ -132,28 +132,28 @@ export function ProfileContent({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <Card>
                         <CardContent className="pt-6 text-center">
-                            <Sparkles className="h-8 w-8 mx-auto mb-2 text-[#4ECDC4]" />
+                            <Sparkles className="h-8 w-8 mx-auto mb-2 text-theme" />
                             <p className="text-3xl font-bold text-[#1B4B6B]">{totalFlashcards}</p>
                             <p className="text-sm text-gray-600">Flashcards Created</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="pt-6 text-center">
-                            <FileText className="h-8 w-8 mx-auto mb-2 text-[#4ECDC4]" />
+                            <FileText className="h-8 w-8 mx-auto mb-2 text-theme" />
                             <p className="text-3xl font-bold text-[#1B4B6B]">{totalSummaries}</p>
                             <p className="text-sm text-gray-600">AI Summaries</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="pt-6 text-center">
-                            <BookOpen className="h-8 w-8 mx-auto mb-2 text-[#4ECDC4]" />
+                            <BookOpen className="h-8 w-8 mx-auto mb-2 text-theme" />
                             <p className="text-3xl font-bold text-[#1B4B6B]">{totalTests}</p>
                             <p className="text-sm text-gray-600">Tests Taken</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="pt-6 text-center">
-                            <Trophy className="h-8 w-8 mx-auto mb-2 text-[#4ECDC4]" />
+                            <Trophy className="h-8 w-8 mx-auto mb-2 text-theme" />
                             <p className="text-3xl font-bold text-[#1B4B6B]">{avgScore}%</p>
                             <p className="text-sm text-gray-600">Avg. Score</p>
                         </CardContent>
@@ -185,7 +185,7 @@ export function ProfileContent({
                                     <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p>No flashcard sets yet.</p>
                                     <Button
-                                        className="mt-4 bg-[#4ECDC4] hover:bg-[#3db8b0] text-[#0A2540]"
+                                        className="mt-4 bg-theme-base hover:bg-theme-dark text-white"
                                         onClick={() => router.push("/dashboard")}
                                     >
                                         Create Your First Set
@@ -208,7 +208,7 @@ export function ProfileContent({
                                                 </CardDescription>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Badge className="bg-[#4ECDC4]/20 text-[#1B4B6B]">
+                                                <Badge className="bg-theme-base/20 text-theme-dark">
                                                     {set.flashcards?.[0]?.count || 0} cards
                                                 </Badge>
                                                 <Button
@@ -235,7 +235,7 @@ export function ProfileContent({
                                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p>No summaries yet.</p>
                                     <Button
-                                        className="mt-4 bg-[#4ECDC4] hover:bg-[#3db8b0] text-[#0A2540]"
+                                        className="mt-4 bg-theme-base hover:bg-theme-dark text-white"
                                         onClick={() => router.push("/dashboard")}
                                     >
                                         Create Your First Summary
@@ -256,7 +256,7 @@ export function ProfileContent({
                                                             href={item.content_source}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="text-[#4ECDC4] hover:underline truncate max-w-xs"
+                                                            className="text-theme hover:underline truncate max-w-xs"
                                                         >
                                                             {item.content_source}
                                                         </a>
@@ -314,7 +314,7 @@ export function ProfileContent({
                                     <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                     <p>No test results yet.</p>
                                     <Button
-                                        className="mt-4 bg-[#4ECDC4] hover:bg-[#3db8b0] text-[#0A2540]"
+                                        className="mt-4 bg-theme-base hover:bg-theme-dark text-white"
                                         onClick={() => router.push("/dashboard")}
                                     >
                                         Take Your First Test

@@ -3,13 +3,14 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, User, Shield } from "lucide-react"
+import { LogOut, User, Shield, Home, Target, Sparkles, BookOpen } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { HomeModule } from "./home-module"
 import { TestingModule } from "./testing-module"
 import { AISummarizer } from "./ai-summarizer"
 import { FlashcardGenerator } from "./flashcard-generator"
-import { ThemeSelector } from "@/components/theme-selector"
+import { ThemeCustomizer } from "@/components/theme-customizer"
 import { Mascot } from "@/components/mascot"
 
 interface DashboardContentProps {
@@ -30,9 +31,11 @@ export function DashboardContent({
   availableTests = [],
 }: DashboardContentProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("testing")
+  const [activeTab, setActiveTab] = useState("home")
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
+    setIsLoggingOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push("/")
@@ -48,15 +51,15 @@ export function DashboardContent({
             <p className="text-sm text-gray-600">Welcome back, {profile?.full_name || user.email}</p>
           </div>
           <div className="flex items-center gap-4">
-            {/* Theme Selector */}
-            <ThemeSelector />
+            {/* Theme Customizer */}
+            <ThemeCustomizer />
 
             {profile?.is_admin && (
               <Button
                 variant="default"
                 size="sm"
                 onClick={() => router.push("/admin")}
-                className="bg-[#1B4B6B] hover:bg-[#0f3654]"
+                className="bg-theme-dark hover:bg-theme-base"
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Admin Panel
@@ -66,9 +69,9 @@ export function DashboardContent({
               <User className="h-4 w-4 mr-2" />
               Profile
             </Button>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
+            <Button variant="outline" size="sm" onClick={handleLogout} disabled={isLoggingOut}>
+              <LogOut className={`h-4 w-4 mr-2 ${isLoggingOut ? 'animate-spin' : ''}`} />
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
         </div>
@@ -76,13 +79,34 @@ export function DashboardContent({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="testing">Testing Module</TabsTrigger>
-            <TabsTrigger value="summarizer">AI Summarizer</TabsTrigger>
-            <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="home" className="gap-2">
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">Home</span>
+            </TabsTrigger>
+            <TabsTrigger value="practice" className="gap-2">
+              <Target className="h-4 w-4" />
+              <span className="hidden sm:inline">Practice</span>
+            </TabsTrigger>
+            <TabsTrigger value="summarizer" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">AI Tools</span>
+            </TabsTrigger>
+            <TabsTrigger value="flashcards" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Flashcards</span>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="testing" className="space-y-6">
+          <TabsContent value="home" className="space-y-6">
+            <HomeModule
+              testResults={testResults}
+              summarizerHistory={summarizerHistory}
+              userId={user.id}
+            />
+          </TabsContent>
+
+          <TabsContent value="practice" className="space-y-6">
             <TestingModule testResults={testResults} userId={user.id} availableTests={availableTests} />
           </TabsContent>
 
@@ -101,3 +125,4 @@ export function DashboardContent({
     </div>
   )
 }
+

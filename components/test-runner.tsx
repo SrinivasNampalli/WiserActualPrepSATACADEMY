@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Mascot } from "@/components/mascot"
 import { useMascot } from "@/lib/mascot-context"
 import { normalizeCategoryId, type CategoryStatsMap } from "@/lib/sat-categories"
+import { QuizAIChatbox } from "@/components/quiz-ai-chatbox"
 
 interface Question {
     id: string
@@ -25,6 +26,8 @@ interface Question {
     options: string[]
     correct_answer: string
     category?: string
+    image_url?: string
+    explanation?: string
 }
 
 interface Test {
@@ -51,6 +54,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
     const [showNavPanel, setShowNavPanel] = useState(false)
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
     const [correctStreak, setCorrectStreak] = useState(0)
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null)
 
     // Timer effect
     useEffect(() => {
@@ -160,16 +164,16 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
             }
         })
 
-        // SAT scoring (simplified - 200-800 per section, total 400-1600)
+        // Simple percentage-based scoring
         const rawScore = questions.length > 0 ? correctCount / questions.length : 0
-        const score = Math.round(400 + (rawScore * 1200)) // Scale 400-1600
+        const score = Math.round(rawScore * 100) // Percentage score
 
         try {
             const { data: resultData, error } = await supabase.from("test_results").insert({
                 user_id: userId,
                 test_id: test.id,
                 score: score,
-                total_score: 1600,
+                total_score: 100,
                 correct_answers: correctCount,
                 total_questions: questions.length,
                 time_taken_minutes: Math.round((test.duration_minutes * 60 - timeLeft) / 60),
@@ -192,16 +196,19 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
 
     const getOptionLabel = (index: number) => String.fromCharCode(65 + index)
 
+    // Check if this is a mock exam (AI help disabled)
+    const isMockExam = test.test_type === "mock"
+
     // Empty state
     if (!currentQuestion || questions.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-[#0D2240]">
                 <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
                 <h2 className="text-2xl font-bold mb-2">No Questions Available</h2>
-                <p className="text-slate-400 mb-6">This test doesn't have any questions yet.</p>
+                <p className="text-gray-500 mb-6">This test doesn't have any questions yet.</p>
                 <Button
                     onClick={() => router.push("/dashboard")}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-[#0D2240] hover:bg-[#0D2240]/90 text-white"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Return to Dashboard
@@ -213,21 +220,21 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
     const isTimeWarning = timeLeft < 300 // Less than 5 minutes
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white flex flex-col">
-            {/* Header - Bluebook Style */}
-            <header className="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+            {/* Header - Bluebook Style Navy Blue */}
+            <header className="bg-[#0D2240] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
                 <div className="flex items-center gap-4">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push("/dashboard")}
-                        className="text-slate-400 hover:text-white"
+                        className="text-white/70 hover:text-white hover:bg-white/10"
                     >
                         <X className="w-5 h-5" />
                     </Button>
                     <div>
                         <h1 className="font-semibold text-lg">{test.title}</h1>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-white/60">
                             Question {currentQuestionIndex + 1} of {questions.length}
                         </p>
                     </div>
@@ -238,8 +245,8 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                     <div className={cn(
                         "flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg",
                         isTimeWarning
-                            ? "bg-red-500/20 text-red-400 animate-pulse"
-                            : "bg-slate-700 text-white"
+                            ? "bg-red-500 text-white animate-pulse"
+                            : "bg-white/10 text-white"
                     )}>
                         <Clock className="w-5 h-5" />
                         <span>{formatTime(timeLeft)}</span>
@@ -250,7 +257,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => setShowNavPanel(!showNavPanel)}
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        className="border-white/30 text-white hover:bg-white/10 bg-transparent"
                     >
                         {answeredCount}/{questions.length} Answered
                     </Button>
@@ -260,11 +267,11 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
             {/* Main Content */}
             <div className="flex-1 flex">
                 {/* Question Area */}
-                <main className="flex-1 p-8 max-w-4xl mx-auto">
-                    {/* Question Text */}
-                    <div className="bg-slate-800 rounded-xl p-6 mb-6 border border-slate-700">
+                <main className="flex-1 p-6 md:p-8 max-w-4xl mx-auto w-full">
+                    {/* Question Card */}
+                    <div className="bg-white rounded-2xl p-6 md:p-8 mb-6 shadow-sm border border-gray-200">
                         <div className="flex items-start justify-between mb-4">
-                            <span className="text-sm text-slate-400 font-medium">
+                            <span className="text-sm text-[#0D2240] font-semibold bg-[#0D2240]/10 px-3 py-1 rounded-full">
                                 Question {currentQuestionIndex + 1}
                             </span>
                             <Button
@@ -274,15 +281,38 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                                 className={cn(
                                     "text-sm",
                                     markedForReview.has(currentQuestion.id)
-                                        ? "text-amber-500"
-                                        : "text-slate-400 hover:text-amber-500"
+                                        ? "text-amber-600 bg-amber-50"
+                                        : "text-gray-500 hover:text-amber-600 hover:bg-amber-50"
                                 )}
                             >
                                 <Flag className="w-4 h-4 mr-1" />
                                 {markedForReview.has(currentQuestion.id) ? "Marked" : "Mark for Review"}
                             </Button>
                         </div>
-                        <p className="text-lg leading-relaxed whitespace-pre-wrap">
+
+                        {/* Question Image (if exists) - Larger container */}
+                        {currentQuestion.image_url && (
+                            <div
+                                className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200 cursor-pointer hover:border-[#0D2240] hover:shadow-md transition-all group"
+                                onClick={() => setZoomedImage(currentQuestion.image_url!)}
+                            >
+                                <div className="relative">
+                                    <img
+                                        src={currentQuestion.image_url}
+                                        alt={`Question ${currentQuestionIndex + 1} illustration`}
+                                        className="w-full max-h-[400px] rounded-lg object-contain"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all rounded-lg">
+                                        <span className="text-[#0D2240] text-sm font-medium bg-white px-4 py-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 border border-gray-200">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
+                                            Click to zoom
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <p className="text-lg leading-relaxed whitespace-pre-wrap text-gray-900">
                             {currentQuestion.question_text}
                         </p>
                     </div>
@@ -300,19 +330,19 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                                     className={cn(
                                         "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4",
                                         isSelected
-                                            ? "bg-blue-600/20 border-blue-500 text-white"
-                                            : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-750"
+                                            ? "bg-[#0D2240] border-[#0D2240] text-white shadow-lg"
+                                            : "bg-white border-gray-200 text-gray-700 hover:border-[#0D2240]/50 hover:shadow-md"
                                     )}
                                 >
                                     <span className={cn(
-                                        "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2",
+                                        "flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border-2",
                                         isSelected
-                                            ? "bg-blue-500 border-blue-500 text-white"
-                                            : "border-slate-600 text-slate-400"
+                                            ? "bg-white border-white text-[#0D2240]"
+                                            : "border-gray-300 text-gray-500"
                                     )}>
                                         {label}
                                     </span>
-                                    <span className="pt-1">{option}</span>
+                                    <span className="pt-1.5 font-medium">{option}</span>
                                 </button>
                             )
                         })}
@@ -324,7 +354,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                             variant="outline"
                             onClick={handlePrev}
                             disabled={currentQuestionIndex === 0}
-                            className="border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                            className="border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                         >
                             <ChevronLeft className="w-4 h-4 mr-2" />
                             Previous
@@ -334,7 +364,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                             {currentQuestionIndex === questions.length - 1 ? (
                                 <Button
                                     onClick={() => setShowSubmitConfirm(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
                                 >
                                     <CheckCircle className="w-4 h-4 mr-2" />
                                     Submit Test
@@ -342,7 +372,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                             ) : (
                                 <Button
                                     onClick={handleNext}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="bg-[#0D2240] hover:bg-[#0D2240]/90 text-white shadow-lg"
                                 >
                                     Next
                                     <ChevronRight className="w-4 h-4 ml-2" />
@@ -354,22 +384,23 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
 
                 {/* Question Navigation Panel (Slide-in) */}
                 {showNavPanel && (
-                    <aside className="w-80 bg-slate-800 border-l border-slate-700 p-4 overflow-y-auto">
+                    <aside className="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto shadow-lg">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold">Questions</h3>
+                            <h3 className="font-semibold text-gray-900">Questions</h3>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowNavPanel(false)}
+                                className="text-gray-500 hover:text-gray-900"
                             >
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
 
                         {/* Legend */}
-                        <div className="flex flex-wrap gap-4 mb-4 text-xs text-slate-400">
+                        <div className="flex flex-wrap gap-4 mb-4 text-xs text-gray-500">
                             <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                <div className="w-3 h-3 rounded-full bg-[#0D2240]"></div>
                                 <span>Answered</span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -377,7 +408,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                                 <span>Marked</span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-slate-600"></div>
+                                <div className="w-3 h-3 rounded-full bg-gray-200"></div>
                                 <span>Unanswered</span>
                             </div>
                         </div>
@@ -395,12 +426,12 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                                         onClick={() => handleGoToQuestion(idx)}
                                         className={cn(
                                             "w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all",
-                                            isCurrent && "ring-2 ring-white",
+                                            isCurrent && "ring-2 ring-[#0D2240]",
                                             isMarked
-                                                ? "bg-amber-500 text-slate-900"
+                                                ? "bg-amber-500 text-white"
                                                 : isAnswered
-                                                    ? "bg-blue-500 text-white"
-                                                    : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                                                    ? "bg-[#0D2240] text-white"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                         )}
                                     >
                                         {idx + 1}
@@ -410,8 +441,8 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                         </div>
 
                         {/* Summary */}
-                        <div className="mt-6 pt-4 border-t border-slate-700">
-                            <div className="text-sm text-slate-400 space-y-1">
+                        <div className="mt-6 pt-4 border-t border-gray-200">
+                            <div className="text-sm text-gray-600 space-y-1">
                                 <p>Answered: {answeredCount} / {questions.length}</p>
                                 <p>Marked for Review: {markedForReview.size}</p>
                                 <p>Unanswered: {questions.length - answeredCount}</p>
@@ -423,18 +454,18 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
 
             {/* Submit Confirmation Modal */}
             {showSubmitConfirm && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                    <div className="bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 border border-slate-700">
-                        <h3 className="text-xl font-bold mb-4">Submit Test?</h3>
-                        <div className="text-slate-400 mb-6 space-y-2">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100">
+                        <h3 className="text-xl font-bold mb-4 text-gray-900">Submit Test?</h3>
+                        <div className="text-gray-600 mb-6 space-y-2">
                             <p>You have answered {answeredCount} out of {questions.length} questions.</p>
                             {answeredCount < questions.length && (
-                                <p className="text-amber-500">
+                                <p className="text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
                                     ⚠️ {questions.length - answeredCount} questions are unanswered.
                                 </p>
                             )}
                             {markedForReview.size > 0 && (
-                                <p className="text-amber-500">
+                                <p className="text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
                                     ⚠️ {markedForReview.size} questions are marked for review.
                                 </p>
                             )}
@@ -443,14 +474,14 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                             <Button
                                 variant="outline"
                                 onClick={() => setShowSubmitConfirm(false)}
-                                className="flex-1 border-slate-600"
+                                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100"
                             >
                                 Continue Test
                             </Button>
                             <Button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                             >
                                 {isSubmitting ? "Submitting..." : "Submit"}
                             </Button>
@@ -459,16 +490,46 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                 </div>
             )}
 
-            {/* Progress Bar */}
-            <div className="h-1 bg-slate-700">
+            {/* Image Zoom Modal */}
+            {zoomedImage && (
                 <div
-                    className="h-full bg-blue-500 transition-all duration-300"
+                    className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] cursor-zoom-out p-4"
+                    onClick={() => setZoomedImage(null)}
+                >
+                    <div className="relative max-w-5xl max-h-[90vh] w-full">
+                        <img
+                            src={zoomedImage}
+                            alt="Zoomed question image"
+                            className="w-full h-full object-contain bg-white rounded-lg shadow-2xl"
+                        />
+                        <button
+                            onClick={() => setZoomedImage(null)}
+                            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors"
+                        >
+                            ✕
+                        </button>
+                        <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm bg-black/50 px-4 py-2 rounded-full">
+                            Click anywhere to close
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Progress Bar */}
+            <div className="h-1.5 bg-gray-200">
+                <div
+                    className="h-full bg-[#0D2240] transition-all duration-300"
                     style={{ width: `${progress}%` }}
                 />
             </div>
 
-            {/* Mascot - follows mouse automatically */}
-            <Mascot />
+            {/* AI Chatbox - Only show for non-mock exams */}
+            <QuizAIChatbox
+                questionText={currentQuestion.question_text}
+                questionNumber={currentQuestionIndex + 1}
+                options={currentQuestion.options}
+                isDisabled={isMockExam}
+            />
         </div>
     )
 }

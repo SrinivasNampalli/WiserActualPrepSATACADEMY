@@ -74,7 +74,7 @@ export default function LoginPage() {
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <Button
                   type="submit"
-                  className="w-full bg-[#4ECDC4] hover:bg-[#45b8b0] text-[#0A2540]"
+                  className="w-full bg-theme-base hover:bg-theme-dark text-white"
                   disabled={isLoading}
                 >
                   {isLoading ? "Signing in..." : "Sign In"}
@@ -82,7 +82,7 @@ export default function LoginPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 Don't have an account?{" "}
-                <Link href="/signup" className="text-[#4ECDC4] hover:underline">
+                <Link href="/signup" className="text-theme hover:underline">
                   Sign up
                 </Link>
               </div>

@@ -19,17 +19,17 @@ export async function POST(request: Request) {
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `You are an SAT tutor. Solve this problem clearly and concisely.
+      config: {
+        maxOutputTokens: 300,
+      },
+      contents: `Solve concisely. Use LaTeX: $x^2$, $\\frac{a}{b}$, $\\sqrt{x}$.
 
-Format your response as:
-ANSWER: [final answer]
+Format:
+**Answer:** [letter and short answer]
 
-STEPS:
-1. [step 1]
-2. [step 2]
-3. [step 3]
-
-CONCEPT: [key concept in one sentence]
+**Solution:**
+1. [brief step]
+2. [brief step]
 
 Question: ${question}`,
     })

@@ -36,6 +36,10 @@ Separate each card with exactly --- on a new line.`,
 
     // Parse the response into structured flashcards
     const text = response.text
+    if (!text) {
+      return NextResponse.json({ error: "No response from AI" }, { status: 500 })
+    }
+
     const cards = text
       .split("---")
       .map((card) => {

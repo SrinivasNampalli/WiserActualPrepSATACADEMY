@@ -85,15 +85,12 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
       {/* Summarizer Interface */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#4ECDC4]" />
-                AI-Powered Summarizer
-              </CardTitle>
-              <CardDescription>Automatically summarize articles, study materials, and SAT passages</CardDescription>
-            </div>
-            <Badge className="bg-[#4ECDC4] text-[#0A2540]">Gemini 1.5 Flash</Badge>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-theme" />
+              AI Summarizer
+            </CardTitle>
+            <CardDescription>Summarize articles, study materials, and SAT passages</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -123,7 +120,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
           <Button
             onClick={handleSummarize}
             disabled={isLoading || !inputText.trim()}
-            className="w-full bg-[#4ECDC4] hover:bg-[#45b8b0] text-[#0A2540]"
+            className="w-full bg-theme-base hover:bg-theme-dark text-white"
           >
             <Sparkles className="h-4 w-4 mr-2" />
             {isLoading ? "Summarizing with Gemini AI..." : "Generate Summary"}
@@ -168,7 +165,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
                           href={item.content_source}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-[#4ECDC4] hover:underline"
+                          className="text-sm text-theme hover:underline"
                         >
                           {item.content_source}
                         </a>
@@ -188,7 +185,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
       </Card>
 
       {/* How It Works */}
-      <Card className="bg-gradient-to-br from-[#4ECDC4]/10 to-[#1B4B6B]/10 border-[#4ECDC4]">
+      <Card className="bg-gradient-to-br from-[var(--theme-base)]/10 to-[#1B4B6B]/10 border-theme">
         <CardHeader>
           <CardTitle>How to Use the AI Summarizer</CardTitle>
         </CardHeader>

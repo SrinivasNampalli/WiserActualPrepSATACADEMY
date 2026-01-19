@@ -16,7 +16,7 @@ export default function SignupSuccessPage() {
               Please check your email and click the confirmation link to activate your account. Once confirmed, you can
               sign in and start your SAT prep journey.
             </p>
-            <Button asChild className="w-full bg-[#4ECDC4] hover:bg-[#45b8b0] text-[#0A2540]">
+            <Button asChild className="w-full bg-theme-base hover:bg-theme-dark text-white">
               <Link href="/login">Go to Login</Link>
             </Button>
           </CardContent>
