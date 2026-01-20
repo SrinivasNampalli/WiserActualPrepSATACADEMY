@@ -17,56 +17,92 @@ export async function POST(request: Request) {
 
         const ai = new GoogleGenAI({ apiKey })
 
-        // Calculate weeks until SAT
+        // Calculate days until SAT
         const today = new Date()
         const testDate = new Date(satDate)
-        const weeksUntil = Math.ceil((testDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 7))
+        const daysUntil = Math.ceil((testDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        const weeksUntil = Math.ceil(daysUntil / 7)
+
+        // Generate dates for the next X days (max 60 days)
+        const planDays = Math.min(daysUntil, 60)
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: `Create a concise ${weeksUntil}-week SAT study schedule.
+            contents: `Create a detailed ${planDays}-day SAT study schedule from today.
 
-SAT Date: ${satDate}
+SAT Date: ${satDate} (${daysUntil} days away)
 Focus Areas: ${focusAreas}
-Hours per day: ${hoursPerDay || 2}
+Study Hours/Day: ${hoursPerDay || 2}
 
-Return ONLY a JSON object with this exact structure (no markdown, no backticks):
+CRITICAL: Return ONLY valid JSON, no markdown, no backticks.
+
+Generate a day-by-day plan. For each day include:
+- A main focus topic
+- 2-3 specific tasks
+- Estimated minutes per task
+- Whether it's a review day, practice day, or new content day
+
+JSON Structure:
 {
-  "schedule": [
+  "days": [
     {
-      "week": 1,
-      "focus": "Topic name",
-      "tasks": ["Task 1", "Task 2", "Task 3"],
-      "keyDates": ["Mon: Math", "Wed: Reading"]
+      "dayNumber": 1,
+      "date": "2025-01-20",
+      "dayType": "new_content",
+      "focus": "Algebra Fundamentals",
+      "tasks": [
+        {"task": "Review linear equations", "minutes": 30, "category": "math"},
+        {"task": "Practice 10 algebra problems", "minutes": 45, "category": "math"},
+        {"task": "Watch video on quadratics", "minutes": 25, "category": "math"}
+      ]
     }
   ],
-  "tips": ["Tip 1", "Tip 2"]
+  "weeklyGoals": [
+    "Week 1: Master basic algebra",
+    "Week 2: Focus on reading strategies"
+  ],
+  "examTips": [
+    "Take a practice test every Saturday",
+    "Review mistakes the next day"
+  ]
 }
 
-Keep each week's tasks to 3-4 items max. Keep tips to 2-3 items.`,
+Generate ${Math.min(planDays, 14)} days of detailed plans. Mix study types: new_content, practice, review, rest_day.`,
         })
 
         let scheduleData
         try {
-            // Clean the response text and parse JSON
             let text = response.text || ""
-            // Remove any markdown code blocks if present
             text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
             scheduleData = JSON.parse(text)
+
+            // Add actual dates to the days
+            const startDate = new Date()
+            scheduleData.days = scheduleData.days.map((day: any, index: number) => {
+                const dayDate = new Date(startDate)
+                dayDate.setDate(dayDate.getDate() + index)
+                return {
+                    ...day,
+                    date: dayDate.toISOString().split("T")[0],
+                    dayNumber: index + 1
+                }
+            })
         } catch (parseError) {
             console.error("Failed to parse schedule JSON:", response.text)
             return NextResponse.json({
-                error: "Failed to parse AI response",
-                rawResponse: response.text
+                error: "Failed to parse AI response. Please try again.",
+                rawResponse: response.text?.substring(0, 500)
             }, { status: 500 })
         }
 
         return NextResponse.json({
             success: true,
-            schedule: scheduleData.schedule,
-            tips: scheduleData.tips,
+            days: scheduleData.days,
+            weeklyGoals: scheduleData.weeklyGoals,
+            examTips: scheduleData.examTips,
             satDate,
-            weeksUntil
+            daysUntil,
+            generatedAt: new Date().toISOString()
         })
     } catch (error: any) {
         console.error("[v0] Gemini API error:", error)
