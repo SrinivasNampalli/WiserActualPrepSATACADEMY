@@ -213,7 +213,7 @@ export function SecretAdminDashboard({
         }
     }
 
-    // Parse questions from pasted text
+    // Parse questions from pasted text - handles mass import with or without numbers
     const parseQuestions = () => {
         setParseError("")
         setParsedQuestions([])
@@ -224,101 +224,116 @@ export function SecretAdminDashboard({
         }
 
         try {
-            // For SAT-style questions, we need to keep the full passage with the question
-            // Split only when we see a clear question number pattern at start of line
-            const questionBlocks = rawQuestionInput
-                .split(/\n(?=\d+[\.\)]\s)/) // Only split on numbered questions (1. or 1))
-                .filter((block) => block.trim())
-
             const parsed: ParsedQuestion[] = []
+            let currentCategory = questionCategory // Default category from dropdown
 
-            for (const block of questionBlocks) {
-                const lines = block.trim().split("\n").filter((l) => l.trim())
+            // Split input into lines for processing
+            const allLines = rawQuestionInput.split("\n")
+            let i = 0
 
-                if (lines.length < 5) continue // Need at least question + 4 options
+            while (i < allLines.length) {
+                const line = allLines[i].trim()
 
-                // Find where options start (A. B. C. D.)
-                let optionStartIndex = -1
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim()
-                    // Check if this line starts option A (first option)
-                    if (/^[Aa][\.\)\:]/i.test(line) || /^\(?[Aa]\)?[\.\:\s]/i.test(line)) {
-                        optionStartIndex = i
-                        break
-                    }
+                // Skip empty lines
+                if (!line) {
+                    i++
+                    continue
                 }
 
-                if (optionStartIndex === -1 || optionStartIndex < 1) continue
+                // Check for Category: header - update current category
+                const categoryMatch = line.match(/^Category:\s*(.+)$/i)
+                if (categoryMatch) {
+                    currentCategory = categoryMatch[1].trim()
+                    i++
+                    continue
+                }
 
-                // ALL lines before options are the question text (includes passage + question)
-                const questionLines = lines.slice(0, optionStartIndex)
-                let questionText = questionLines
-                    .map(line => line.replace(/^\d+[\.\)]\s*/, "").trim()) // Remove leading numbers
-                    .join("\n") // Keep newlines for readability
-
-                // Extract options (A, B, C, D)
-                const optionLines = lines.slice(optionStartIndex)
+                // Check for numbered question start (1. or 1) format)
+                const questionStartMatch = line.match(/^(\d+)[\.\)]\s*(.*)$/)
+                let questionText = questionStartMatch ? questionStartMatch[2].trim() : line
                 const options: string[] = []
+                let foundOptions = false
 
-                for (const line of optionLines) {
-                    // Match various option formats: A. B) C: (A) etc.
-                    const optionMatch = line.match(/^[\(\s]*([A-Da-d])[\.\)\:\s]+(.+)$/i)
-                    if (optionMatch) {
-                        options.push(optionMatch[2].trim())
-                    }
+                // Check if options are on the same line (inline format)
+                // Example: "Which element...? A) Helium B) Oxygen C) Hydrogen D) Carbon"
+                const inlineOptionsMatch = questionText.match(/^(.+?)\s+A\)\s*(.+?)\s+B\)\s*(.+?)\s+C\)\s*(.+?)\s+D\)\s*(.+)$/i)
+                if (inlineOptionsMatch) {
+                    questionText = inlineOptionsMatch[1].trim()
+                    options.push(inlineOptionsMatch[2].trim())
+                    options.push(inlineOptionsMatch[3].trim())
+                    options.push(inlineOptionsMatch[4].trim())
+                    options.push(inlineOptionsMatch[5].trim())
+                    foundOptions = true
                 }
 
-                if (options.length >= 4 && questionText.trim()) {
+                // If no inline options, look for options on following lines
+                if (!foundOptions) {
+                    i++
+                    // Collect question text until we hit option A
+                    while (i < allLines.length) {
+                        const nextLine = allLines[i].trim()
+
+                        // Skip empty lines
+                        if (!nextLine) {
+                            i++
+                            continue
+                        }
+
+                        // Check for Category: header - means end of this question
+                        if (/^Category:/i.test(nextLine)) break
+
+                        // Check for next numbered question - means end of this question
+                        if (/^\d+[\.\)]/.test(nextLine)) break
+
+                        // Check for another inline question (has A) B) C) D) pattern)
+                        if (/\sA\)\s*.+\sB\)\s*.+\sC\)\s*.+\sD\)\s/i.test(nextLine)) break
+
+                        // Check if this line starts with an option letter
+                        const optionMatch = nextLine.match(/^([A-D])[\)\.\:]\s*(.+)$/i)
+                        if (optionMatch) {
+                            options.push(optionMatch[2].trim())
+                            i++
+
+                            // Continue collecting remaining options
+                            while (i < allLines.length && options.length < 4) {
+                                const optLine = allLines[i].trim()
+                                if (!optLine) { i++; continue }
+
+                                const nextOptMatch = optLine.match(/^([A-D])[\)\.\:]\s*(.+)$/i)
+                                if (nextOptMatch) {
+                                    options.push(nextOptMatch[2].trim())
+                                    i++
+                                } else {
+                                    break
+                                }
+                            }
+                            foundOptions = true
+                            break
+                        } else {
+                            // Add to question text
+                            questionText += "\n" + nextLine
+                            i++
+                        }
+                    }
+                } else {
+                    i++
+                }
+
+                // Save question if we have valid data
+                if (questionText.trim() && options.length >= 4) {
                     parsed.push({
                         question_text: questionText.trim(),
                         options: [options[0], options[1], options[2], options[3]],
                         correct_answer: "A",
-                        category: questionCategory,
+                        category: currentCategory,
                         difficulty: questionDifficulty,
                         question_type: "multiple_choice",
                     })
                 }
             }
 
-            // If no numbered questions found, try parsing the whole input as a single question
             if (parsed.length === 0) {
-                const lines = rawQuestionInput.trim().split("\n").filter((l) => l.trim())
-
-                let optionStartIndex = -1
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim()
-                    if (/^[Aa][\.\)\:]/i.test(line) || /^\(?[Aa]\)?[\.\:\s]/i.test(line)) {
-                        optionStartIndex = i
-                        break
-                    }
-                }
-
-                if (optionStartIndex > 0) {
-                    const questionText = lines.slice(0, optionStartIndex).join("\n").trim()
-                    const options: string[] = []
-
-                    for (const line of lines.slice(optionStartIndex)) {
-                        const optionMatch = line.match(/^[\(\s]*([A-Da-d])[\.\)\:\s]+(.+)$/i)
-                        if (optionMatch) {
-                            options.push(optionMatch[2].trim())
-                        }
-                    }
-
-                    if (options.length >= 4 && questionText) {
-                        parsed.push({
-                            question_text: questionText,
-                            options: [options[0], options[1], options[2], options[3]],
-                            correct_answer: "A",
-                            category: questionCategory,
-                            difficulty: questionDifficulty,
-                            question_type: "multiple_choice",
-                        })
-                    }
-                }
-            }
-
-            if (parsed.length === 0) {
-                setParseError("Could not parse any questions. Make sure format includes:\n\n[Passage text]\nQuestion text\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4")
+                setParseError("Could not parse any questions. Expected format:\n\nQuestion text A) Option B) Option C) Option D) Option\n\nOR\n\n1. Question text\nA) Option 1\nB) Option 2\nC) Option 3\nD) Option 4")
                 return
             }
 
