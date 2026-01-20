@@ -42,6 +42,20 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(10)
 
+  // Fetch saved flashcard sets with card count
+  const { data: flashcardSets } = await supabase
+    .from("flashcard_sets")
+    .select("*, flashcards(count)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(10)
+
+  // Transform flashcard sets to include card count
+  const savedFlashcards = flashcardSets?.map(set => ({
+    ...set,
+    card_count: set.flashcards?.[0]?.count || 0
+  })) || []
+
   // Fetch available tests using admin client to bypass RLS
   // Only show public tests to users (admins can see all in admin panel)
   const { data: allTests, error: testsError } = await adminSupabase
@@ -63,6 +77,7 @@ export default async function DashboardPage() {
       courseProgress={courseProgress || []}
       summarizerHistory={summarizerHistory || []}
       availableTests={availableTests}
+      savedFlashcards={savedFlashcards}
     />
   )
 }

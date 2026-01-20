@@ -20,6 +20,7 @@ interface DashboardContentProps {
   courseProgress: any[]
   summarizerHistory: any[]
   availableTests?: any[]
+  savedFlashcards?: any[]
 }
 
 export function DashboardContent({
@@ -29,6 +30,7 @@ export function DashboardContent({
   courseProgress,
   summarizerHistory,
   availableTests = [],
+  savedFlashcards = [],
 }: DashboardContentProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("home")
@@ -102,6 +104,7 @@ export function DashboardContent({
             <HomeModule
               testResults={testResults}
               summarizerHistory={summarizerHistory}
+              savedFlashcards={savedFlashcards}
               userId={user.id}
             />
           </TabsContent>
