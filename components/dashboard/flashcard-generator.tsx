@@ -7,14 +7,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, Plus, RotateCw, Save, ChevronRight, ChevronLeft, Check, X } from "lucide-react"
+import { Sparkles, Plus, RotateCw, Save, ChevronRight, ChevronLeft, Check, X, Crown, Lock } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useSubscription, FREE_LIMITS } from "@/lib/subscription-context"
 
 interface FlashcardGeneratorProps {
   userId: string
 }
 
 export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
+  const { isPremium, checkFeatureAccess, getRemainingUsage, incrementUsage } = useSubscription()
   const [topic, setTopic] = useState("")
   const [courseLevel, setCourseLevel] = useState("AP")
   const [numCards, setNumCards] = useState(10)
@@ -24,11 +26,22 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [savedSets, setSavedSets] = useState<any[]>([])
+  const [limitReached, setLimitReached] = useState(false)
+
+  const remainingGenerations = getRemainingUsage('flashcard_sets')
+  const canGenerate = isPremium || remainingGenerations > 0
 
   const generateFlashcards = async () => {
     if (!topic.trim()) return
 
+    // Check limit for free users
+    if (!canGenerate) {
+      setLimitReached(true)
+      return
+    }
+
     setIsGenerating(true)
+    setLimitReached(false)
     try {
       const response = await fetch("/api/gemini/generate-flashcards", {
         method: "POST",
@@ -41,6 +54,7 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
         setFlashcards(data.flashcards)
         setCurrentCardIndex(0)
         setIsFlipped(false)
+        // Increment usage for free users (only when saving, not generating preview)
       }
     } catch (error) {
       console.error("Failed to generate flashcards:", error)
@@ -51,6 +65,12 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
 
   const saveFlashcardSet = async () => {
     if (flashcards.length === 0) return
+
+    // Check if free user can save (has remaining usage)
+    if (!isPremium && !canGenerate) {
+      setLimitReached(true)
+      return
+    }
 
     setIsSaving(true)
     try {
@@ -80,6 +100,11 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
       const { error: cardsError } = await supabase.from("flashcards").insert(flashcardsToInsert)
 
       if (cardsError) throw cardsError
+
+      // Increment usage for free users after successful save
+      if (!isPremium) {
+        await incrementUsage('flashcard_sets')
+      }
 
       alert("Flashcard set saved successfully!")
       loadSavedSets()
@@ -139,13 +164,53 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
       {/* Generator Form */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-theme" />
-            <CardTitle>AI Flashcard Generator</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-theme" />
+              <CardTitle>AI Flashcard Generator</CardTitle>
+            </div>
+            {/* Usage Counter for Free Users */}
+            {!isPremium && (
+              <Badge variant={canGenerate ? "secondary" : "destructive"} className="flex items-center gap-1">
+                {canGenerate ? (
+                  <>{remainingGenerations} set{remainingGenerations !== 1 ? 's' : ''} remaining</>
+                ) : (
+                  <>
+                    <Lock className="h-3 w-3" />
+                    Limit reached
+                  </>
+                )}
+              </Badge>
+            )}
+            {isPremium && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                <Crown className="h-3 w-3 mr-1" />
+                Premium
+              </Badge>
+            )}
           </div>
           <CardDescription>Generate AP-level flashcards for any topic using Gemini AI</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Limit Reached Warning */}
+          {limitReached && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Lock className="h-5 w-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800">Free limit reached!</p>
+                  <p className="text-sm text-amber-600">You can only generate {FREE_LIMITS.flashcard_sets} flashcard set as a free user.</p>
+                </div>
+              </div>
+              <Button asChild size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                <a href="/pricing">
+                  <Crown className="h-4 w-4 mr-1" />
+                  Upgrade
+                </a>
+              </Button>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-3 gap-4">
             <div className="md:col-span-2 space-y-2">
               <Label htmlFor="topic">Course Topic</Label>
@@ -154,11 +219,12 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
                 placeholder="e.g., AP Biology: Cell Structure, AP Calculus: Derivatives, SAT Math: Quadratics"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
+                disabled={limitReached && !isPremium}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="courseLevel">Course Level</Label>
-              <Select value={courseLevel} onValueChange={setCourseLevel}>
+              <Select value={courseLevel} onValueChange={setCourseLevel} disabled={limitReached && !isPremium}>
                 <SelectTrigger id="courseLevel">
                   <SelectValue />
                 </SelectTrigger>
@@ -182,11 +248,12 @@ export function FlashcardGenerator({ userId }: FlashcardGeneratorProps) {
                 max={50}
                 value={numCards}
                 onChange={(e) => setNumCards(Number.parseInt(e.target.value))}
+                disabled={limitReached && !isPremium}
               />
             </div>
             <Button
               onClick={generateFlashcards}
-              disabled={isGenerating || !topic.trim()}
+              disabled={isGenerating || !topic.trim() || (limitReached && !isPremium)}
               className="bg-theme-base hover:bg-theme-dark text-white"
             >
               {isGenerating ? (

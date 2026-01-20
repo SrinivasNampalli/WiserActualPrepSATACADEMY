@@ -41,6 +41,13 @@ export function Navbar() {
               How It Works
             </Link>
             <Link
+              href="/study-planner"
+              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-white"
+                }`}
+            >
+              Study Planner
+            </Link>
+            <Link
               href="/#reviews"
               className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-white"
                 }`}
@@ -88,6 +95,13 @@ export function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               How It Works
+            </Link>
+            <Link
+              href="/study-planner"
+              className="block py-2 text-[#1B4B6B] hover:text-theme font-medium"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Study Planner
             </Link>
             <Link
               href="/#reviews"

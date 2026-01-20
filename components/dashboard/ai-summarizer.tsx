@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Sparkles, Copy, Check, History } from "lucide-react"
+import { Sparkles, Copy, Check, History, Crown, Lock } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useSubscription, FREE_LIMITS } from "@/lib/subscription-context"
 
 interface AISummarizerProps {
   summarizerHistory: any[]
@@ -16,6 +17,7 @@ interface AISummarizerProps {
 }
 
 export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISummarizerProps) {
+  const { isPremium, getRemainingUsage, incrementUsage } = useSubscription()
   const [inputText, setInputText] = useState("")
   const [sourceUrl, setSourceUrl] = useState("")
   const [summary, setSummary] = useState("")
@@ -23,6 +25,10 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
   const [copied, setCopied] = useState(false)
   const [summarizerHistory, setSummarizerHistory] = useState(initialHistory)
   const [error, setError] = useState<string | null>(null)
+  const [limitReached, setLimitReached] = useState(false)
+
+  const remainingUses = getRemainingUsage('ai_summarizer')
+  const canUse = isPremium || remainingUses > 0
 
   // Render markdown-style formatting (bold, bullets)
   const renderMarkdown = (text: string) => {
@@ -55,9 +61,16 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
   const handleSummarize = async () => {
     if (!inputText.trim()) return
 
+    // Check limit for free users
+    if (!canUse) {
+      setLimitReached(true)
+      return
+    }
+
     setIsLoading(true)
     setSummary("")
     setError(null)
+    setLimitReached(false)
 
     try {
       console.log("[v0] Calling Gemini API for summarization")
@@ -94,6 +107,11 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
       if (savedData) {
         setSummarizerHistory([savedData, ...summarizerHistory])
       }
+
+      // Increment usage for free users after successful summarization
+      if (!isPremium) {
+        await incrementUsage('ai_summarizer')
+      }
     } catch (error) {
       console.error("[v0] Error summarizing:", error)
       setError("Failed to generate summary. Please try again.")
@@ -113,15 +131,55 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
       {/* Summarizer Interface */}
       <Card>
         <CardHeader>
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-theme" />
-              AI Summarizer
-            </CardTitle>
-            <CardDescription>Summarize articles, study materials, and SAT passages</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-theme" />
+                AI Summarizer
+              </CardTitle>
+              <CardDescription>Summarize articles, study materials, and SAT passages</CardDescription>
+            </div>
+            {/* Usage Counter */}
+            {!isPremium && (
+              <Badge variant={canUse ? "secondary" : "destructive"} className="flex items-center gap-1">
+                {canUse ? (
+                  <>{remainingUses} use{remainingUses !== 1 ? 's' : ''} left today</>
+                ) : (
+                  <>
+                    <Lock className="h-3 w-3" />
+                    Daily limit reached
+                  </>
+                )}
+              </Badge>
+            )}
+            {isPremium && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                <Crown className="h-3 w-3 mr-1" />
+                Premium
+              </Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Limit Reached Warning */}
+          {limitReached && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Lock className="h-5 w-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800">Daily limit reached!</p>
+                  <p className="text-sm text-amber-600">Free users get {FREE_LIMITS.ai_summarizer} summaries per day.</p>
+                </div>
+              </div>
+              <Button asChild size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                <a href="/pricing">
+                  <Crown className="h-4 w-4 mr-1" />
+                  Upgrade
+                </a>
+              </Button>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="source-url">Source URL (Optional)</Label>
             <Input
@@ -129,6 +187,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
               placeholder="https://example.com/article"
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
+              disabled={limitReached && !isPremium}
             />
           </div>
 
