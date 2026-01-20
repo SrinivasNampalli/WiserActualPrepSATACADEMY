@@ -3,13 +3,14 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, User, Shield, Home, Target, Sparkles, BookOpen } from "lucide-react"
+import { LogOut, User, Shield, Home, Target, Sparkles, BookOpen, CalendarDays } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { HomeModule } from "./home-module"
 import { TestingModule } from "./testing-module"
 import { AISummarizer } from "./ai-summarizer"
 import { FlashcardGenerator } from "./flashcard-generator"
+import { CalendarModule } from "./calendar-module"
 import { ThemeCustomizer } from "@/components/theme-customizer"
 import { Mascot } from "@/components/mascot"
 
@@ -79,7 +80,7 @@ export function DashboardContent({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="home" className="gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Home</span>
@@ -87,6 +88,10 @@ export function DashboardContent({
             <TabsTrigger value="practice" className="gap-2">
               <Target className="h-4 w-4" />
               <span className="hidden sm:inline">Practice</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendar</span>
             </TabsTrigger>
             <TabsTrigger value="summarizer" className="gap-2">
               <Sparkles className="h-4 w-4" />
@@ -108,6 +113,10 @@ export function DashboardContent({
 
           <TabsContent value="practice" className="space-y-6">
             <TestingModule testResults={testResults} userId={user.id} availableTests={availableTests} />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <CalendarModule userId={user.id} />
           </TabsContent>
 
           <TabsContent value="summarizer" className="space-y-6">
