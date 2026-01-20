@@ -3,13 +3,12 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, User, Shield, Home, Target, Sparkles, BookOpen, CalendarDays } from "lucide-react"
+import { LogOut, User, Shield, Home, Target, Sparkles, CalendarDays } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { HomeModule } from "./home-module"
 import { TestingModule } from "./testing-module"
-import { AISummarizer } from "./ai-summarizer"
-import { FlashcardGenerator } from "./flashcard-generator"
+import { AIToolsModule } from "./ai-tools-module"
 import { CalendarModule } from "./calendar-module"
 import { ThemeCustomizer } from "@/components/theme-customizer"
 import { Mascot } from "@/components/mascot"
@@ -80,7 +79,7 @@ export function DashboardContent({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="home" className="gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Home</span>
@@ -93,13 +92,9 @@ export function DashboardContent({
               <CalendarDays className="h-4 w-4" />
               <span className="hidden sm:inline">Calendar</span>
             </TabsTrigger>
-            <TabsTrigger value="summarizer" className="gap-2">
+            <TabsTrigger value="ai-tools" className="gap-2">
               <Sparkles className="h-4 w-4" />
               <span className="hidden sm:inline">AI Tools</span>
-            </TabsTrigger>
-            <TabsTrigger value="flashcards" className="gap-2">
-              <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline">Flashcards</span>
             </TabsTrigger>
           </TabsList>
 
@@ -119,12 +114,8 @@ export function DashboardContent({
             <CalendarModule userId={user.id} />
           </TabsContent>
 
-          <TabsContent value="summarizer" className="space-y-6">
-            <AISummarizer summarizerHistory={summarizerHistory} userId={user.id} />
-          </TabsContent>
-
-          <TabsContent value="flashcards" className="space-y-6">
-            <FlashcardGenerator userId={user.id} />
+          <TabsContent value="ai-tools" className="space-y-6">
+            <AIToolsModule summarizerHistory={summarizerHistory} userId={user.id} />
           </TabsContent>
         </Tabs>
       </div>
