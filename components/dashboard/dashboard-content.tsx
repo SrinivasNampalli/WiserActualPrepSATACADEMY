@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LogOut, User, Shield, Home, Target, Sparkles, BookOpen } from "lucide-react"
+import { LogOut, User, Shield, Home, Target, Sparkles, BookOpen, Gamepad2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { HomeModule } from "./home-module"
@@ -79,7 +79,7 @@ export function DashboardContent({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="home" className="gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Home</span>
@@ -95,6 +95,10 @@ export function DashboardContent({
             <TabsTrigger value="flashcards" className="gap-2">
               <BookOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Flashcards</span>
+            </TabsTrigger>
+            <TabsTrigger value="games" className="gap-2">
+              <Gamepad2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Games</span>
             </TabsTrigger>
           </TabsList>
 
@@ -116,6 +120,33 @@ export function DashboardContent({
 
           <TabsContent value="flashcards" className="space-y-6">
             <FlashcardGenerator userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="games" className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">SAT Prep Games</h2>
+              <p className="text-gray-600">Make studying fun with interactive games!</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                { id: "comma-fall", title: "Comma Fall", emoji: "✨", desc: "Catch the correct punctuation!", color: "from-pink-500 to-rose-600" },
+                { id: "connections", title: "Word Connections", emoji: "🔗", desc: "Find groups of 4 related words", color: "from-blue-500 to-indigo-600" },
+                { id: "transition-tracks", title: "Transition Tracks", emoji: "🚂", desc: "Pick transitions before the train leaves!", color: "from-emerald-500 to-green-600" },
+                { id: "word-roots", title: "Word Roots", emoji: "📚", desc: "Learn Greek & Latin roots", color: "from-purple-500 to-violet-600" },
+              ].map(game => (
+                <a
+                  key={game.id}
+                  href={`/games/${game.id}`}
+                  className="block p-6 bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all"
+                >
+                  <div className={`inline-block px-3 py-1 rounded-full text-white text-xs font-medium bg-gradient-to-r ${game.color} mb-3`}>
+                    {game.emoji}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">{game.title}</h3>
+                  <p className="text-gray-600 text-sm mt-1">{game.desc}</p>
+                </a>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
