@@ -7,49 +7,35 @@ export interface Product {
   popular?: boolean
 }
 
-// This is the source of truth for all products
+// Simplified pricing: Free and Premium only
 export const PRODUCTS: Product[] = [
   {
-    id: "basic-plan",
-    name: "Basic",
-    description: "Perfect for getting started with SAT prep",
-    priceInCents: 4900, // $49
+    id: "free-plan",
+    name: "Free",
+    description: "Get started with essential SAT prep tools",
+    priceInCents: 0, // Free
     features: [
-      "Access to 500+ practice questions",
-      "Basic progress tracking",
-      "Study guides and tips",
-      "Email support",
+      "100 practice questions",
+      "Basic AI question solver",
+      "Limited flashcard generation",
+      "Progress tracking",
+      "Community support",
     ],
-  },
-  {
-    id: "pro-plan",
-    name: "Pro",
-    description: "Our most popular plan for serious students",
-    priceInCents: 9900, // $99
-    features: [
-      "Everything in Basic",
-      "Full AI-powered evaluation",
-      "Real mock test questions",
-      "Spaced repetition learning",
-      "Personalized study plan",
-      "Priority support",
-      "200+ point score guarantee",
-    ],
-    popular: true,
   },
   {
     id: "premium-plan",
     name: "Premium",
-    description: "Complete SAT mastery with 1-on-1 tutoring",
-    priceInCents: 19900, // $199
+    description: "Unlimited access to all features",
+    priceInCents: 1500, // $15
     features: [
-      "Everything in Pro",
-      "Weekly 1-on-1 tutoring sessions",
-      "College application guidance",
-      "Unlimited practice tests",
-      "Custom study materials",
-      "Phone & video support",
-      "Dedicated success coach",
+      "Unlimited practice questions",
+      "Full AI-powered tutoring",
+      "Unlimited flashcards & summarizer",
+      "Real SAT mock tests",
+      "Personalized study plans",
+      "Priority support",
+      "200+ point score guarantee",
     ],
+    popular: true,
   },
 ]

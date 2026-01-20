@@ -19,11 +19,15 @@ export async function POST(request: Request) {
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Summarize this content in 3-5 clear bullet points for a college student:
+      contents: `Summarize this content concisely for SAT prep. Maximum 150 words.
 
 ${text}
 
-Format as bullet points starting with •`,
+Format rules:
+- Use **bold** for key terms
+- Use bullet points (•) for main ideas
+- Keep it scannable and study-friendly
+- No more than 5 bullet points`,
     })
 
     return NextResponse.json({ summary: response.text })

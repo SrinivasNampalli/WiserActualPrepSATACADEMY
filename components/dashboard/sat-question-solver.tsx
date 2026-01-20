@@ -4,8 +4,19 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Sparkles, Copy, Check } from "lucide-react"
+import { useSubscription } from "@/lib/subscription-context"
+import { UsageIndicator, Paywall } from "@/components/paywall"
+
+// Simple markdown formatter for bold text
+function formatAnswer(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold text-[#0D2240]">{part.slice(2, -2)}</strong>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
 
 export function SATQuestionSolver() {
   const [question, setQuestion] = useState("")
@@ -13,32 +24,40 @@ export function SATQuestionSolver() {
   const [isLoading, setIsLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { checkFeatureAccess, incrementUsage, isPremium } = useSubscription()
 
   const handleSolve = async () => {
     if (!question.trim()) return
+
+    if (!checkFeatureAccess('ai_solver')) {
+      setError("You've reached your daily limit. Upgrade to Premium for unlimited access!")
+      return
+    }
 
     setIsLoading(true)
     setAnswer("")
     setError(null)
 
     try {
-      console.log("[v0] Calling Gemini API to solve SAT question")
+      const canProceed = await incrementUsage('ai_solver')
+      if (!canProceed) {
+        setError("You've reached your daily limit. Upgrade to Premium for unlimited access!")
+        setIsLoading(false)
+        return
+      }
+
       const response = await fetch("/api/gemini/solve-question", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to solve question")
-      }
+      if (!response.ok) throw new Error("Failed to solve question")
 
       const data = await response.json()
       setAnswer(data.answer)
     } catch (error) {
-      console.error("[v0] Error solving question:", error)
+      console.error("Error solving question:", error)
       setError("Failed to solve the question. Please try again.")
     } finally {
       setIsLoading(false)
@@ -57,18 +76,18 @@ export function SATQuestionSolver() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-[#4ECDC4]" />
+              <Sparkles className="h-5 w-5 text-theme" />
               SAT Question Solver
             </CardTitle>
-            <CardDescription>Get step-by-step solutions to SAT practice questions</CardDescription>
+            <CardDescription>Get step-by-step solutions</CardDescription>
           </div>
-          <Badge className="bg-[#4ECDC4] text-[#0A2540]">Gemini AI</Badge>
+          <UsageIndicator feature="ai_solver" />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <Textarea
-          placeholder="Paste your SAT question here... The AI tutor will solve it step-by-step and explain the answer."
-          className="min-h-[150px]"
+          placeholder="Paste your SAT question here..."
+          className="min-h-[100px]"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
         />
@@ -78,32 +97,25 @@ export function SATQuestionSolver() {
         <Button
           onClick={handleSolve}
           disabled={isLoading || !question.trim()}
-          className="w-full bg-[#4ECDC4] hover:bg-[#45b8b0] text-[#0A2540]"
+          className="w-full bg-theme-base hover:bg-theme-dark text-white"
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {isLoading ? "Solving with AI Tutor..." : "Solve Question"}
+          {isLoading ? "Solving..." : "Solve"}
         </Button>
 
         {answer && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-[#1B4B6B]">Step-by-Step Solution</h4>
+          <div className="mt-4 p-4 bg-slate-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-[#0D2240]">Solution</span>
               <Button variant="ghost" size="sm" onClick={copyToClipboard}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               </Button>
             </div>
-            <div className="prose prose-sm max-w-none">
-              <p className="text-sm whitespace-pre-wrap text-gray-700">{answer}</p>
+            <div className="text-sm whitespace-pre-wrap text-gray-700 leading-relaxed">
+              {formatAnswer(answer)}
             </div>
           </div>
         )}
-
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-xs text-blue-900">
-            <strong>Tip:</strong> Copy and paste complete SAT questions including answer choices for the most accurate
-            solutions. The AI tutor will explain the reasoning behind each step.
-          </p>
-        </div>
       </CardContent>
     </Card>
   )

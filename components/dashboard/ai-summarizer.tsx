@@ -24,6 +24,34 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
   const [summarizerHistory, setSummarizerHistory] = useState(initialHistory)
   const [error, setError] = useState<string | null>(null)
 
+  // Render markdown-style formatting (bold, bullets)
+  const renderMarkdown = (text: string) => {
+    return text.split('\n').map((line, i) => {
+      // Handle bullet points
+      const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*')
+      const cleanLine = isBullet ? line.replace(/^[\s]*[•\-\*][\s]*/, '') : line
+
+      // Handle bold text (between **)
+      const parts = cleanLine.split(/(\*\*[^*]+\*\*)/g)
+      const formatted = parts.map((part, j) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={j} className="font-semibold text-[#1B4B6B]">{part.slice(2, -2)}</strong>
+        }
+        return <span key={j}>{part}</span>
+      })
+
+      if (isBullet) {
+        return (
+          <div key={i} className="flex items-start gap-2 mb-1">
+            <span className="text-[#4ECDC4] font-bold">•</span>
+            <span>{formatted}</span>
+          </div>
+        )
+      }
+      return <div key={i} className="mb-1">{formatted}</div>
+    })
+  }
+
   const handleSummarize = async () => {
     if (!inputText.trim()) return
 
@@ -85,15 +113,12 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
       {/* Summarizer Interface */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#4ECDC4]" />
-                AI-Powered Summarizer
-              </CardTitle>
-              <CardDescription>Automatically summarize articles, study materials, and SAT passages</CardDescription>
-            </div>
-            <Badge className="bg-[#4ECDC4] text-[#0A2540]">Gemini 1.5 Flash</Badge>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-theme" />
+              AI Summarizer
+            </CardTitle>
+            <CardDescription>Summarize articles, study materials, and SAT passages</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -123,21 +148,21 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
           <Button
             onClick={handleSummarize}
             disabled={isLoading || !inputText.trim()}
-            className="w-full bg-[#4ECDC4] hover:bg-[#45b8b0] text-[#0A2540]"
+            className="w-full bg-theme-base hover:bg-theme-dark text-white"
           >
             <Sparkles className="h-4 w-4 mr-2" />
             {isLoading ? "Summarizing with Gemini AI..." : "Generate Summary"}
           </Button>
 
           {summary && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-2">
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-80 overflow-auto">
+              <div className="flex items-center justify-between mb-2 sticky top-0 bg-gray-50">
                 <h4 className="font-semibold text-[#1B4B6B]">AI Summary</h4>
                 <Button variant="ghost" size="sm" onClick={copyToClipboard}>
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-sm whitespace-pre-wrap text-gray-700">{summary}</p>
+              <div className="text-sm text-gray-700">{renderMarkdown(summary)}</div>
             </div>
           )}
         </CardContent>
@@ -168,7 +193,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
                           href={item.content_source}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-[#4ECDC4] hover:underline"
+                          className="text-sm text-theme hover:underline"
                         >
                           {item.content_source}
                         </a>
@@ -188,7 +213,7 @@ export function AISummarizer({ summarizerHistory: initialHistory, userId }: AISu
       </Card>
 
       {/* How It Works */}
-      <Card className="bg-gradient-to-br from-[#4ECDC4]/10 to-[#1B4B6B]/10 border-[#4ECDC4]">
+      <Card className="bg-gradient-to-br from-[var(--theme-base)]/10 to-[#1B4B6B]/10 border-theme">
         <CardHeader>
           <CardTitle>How to Use the AI Summarizer</CardTitle>
         </CardHeader>

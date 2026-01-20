@@ -10,7 +10,7 @@ export function ThemeSelector() {
     const [isOpen, setIsOpen] = useState(false)
     const { themeName, setTheme, mascotType, setMascotType, theme } = useThemeContext()
 
-    const themeOptions: ThemeName[] = ["sakura", "ocean", "sunset"]
+    const themeOptions: Exclude<ThemeName, "custom">[] = ["sakura", "ocean", "sunset"]
 
     return (
         <div className="relative">
@@ -58,8 +58,8 @@ export function ThemeSelector() {
                                             key={name}
                                             onClick={() => setTheme(name)}
                                             className={`relative w-12 h-12 rounded-full transition-all duration-200 ${isSelected
-                                                    ? "ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110"
-                                                    : "hover:scale-105"
+                                                ? "ring-2 ring-offset-2 ring-slate-900 dark:ring-white scale-110"
+                                                : "hover:scale-105"
                                                 }`}
                                             style={{ background: t.gradient }}
                                             title={t.displayName}
@@ -74,7 +74,7 @@ export function ThemeSelector() {
                                 })}
                             </div>
                             <p className="text-xs text-slate-400 mt-2 text-center">
-                                {themes[themeName].displayName}
+                                {theme.displayName}
                             </p>
                         </div>
 
@@ -85,8 +85,8 @@ export function ThemeSelector() {
                                 <button
                                     onClick={() => setMascotType("female")}
                                     className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all text-sm flex items-center justify-center gap-2 ${mascotType === "female"
-                                            ? "border-pink-400 bg-pink-50 dark:bg-pink-900/20 text-pink-600"
-                                            : "border-slate-200 dark:border-slate-600 hover:border-slate-300"
+                                        ? "border-pink-400 bg-pink-50 dark:bg-pink-900/20 text-pink-600"
+                                        : "border-slate-200 dark:border-slate-600 hover:border-slate-300"
                                         }`}
                                 >
                                     <User className="w-4 h-4" />
@@ -95,8 +95,8 @@ export function ThemeSelector() {
                                 <button
                                     onClick={() => setMascotType("male")}
                                     className={`flex-1 py-2 px-3 rounded-lg border-2 transition-all text-sm flex items-center justify-center gap-2 ${mascotType === "male"
-                                            ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600"
-                                            : "border-slate-200 dark:border-slate-600 hover:border-slate-300"
+                                        ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-600"
+                                        : "border-slate-200 dark:border-slate-600 hover:border-slate-300"
                                         }`}
                                 >
                                     <User className="w-4 h-4" />

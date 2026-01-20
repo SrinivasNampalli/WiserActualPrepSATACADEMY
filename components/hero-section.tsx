@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowDown } from "lucide-react"
+import { ArrowDown, Zap } from "lucide-react"
 import Link from "next/link"
 
 export function HeroSection() {
@@ -67,18 +67,16 @@ export function HeroSection() {
         <div className="relative z-10 flex flex-col items-center px-6 text-center">
           {/* Pre-headline */}
           <p
-            className={`text-sm font-medium uppercase tracking-[0.3em] text-[#bee9e8] transition-all duration-1000 md:text-base ${
-              mounted ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
-            }`}
+            className={`text-sm font-medium uppercase tracking-[0.3em] text-[#bee9e8] transition-all duration-1000 md:text-base ${mounted ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+              }`}
           >
             Your Score Journey
           </p>
 
           {/* The Score - main interactive element */}
           <div
-            className={`relative mt-8 transition-all duration-1000 ${
-              mounted ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
+            className={`relative mt-8 transition-all duration-1000 ${mounted ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
             style={{ transitionDelay: "200ms" }}
           >
             <span
@@ -94,9 +92,8 @@ export function HeroSection() {
 
             {/* Score change indicator */}
             <div
-              className={`absolute -right-4 top-4 rounded-full bg-[#bee9e8] px-4 py-2 font-semibold text-[#1b4965] shadow-lg transition-all duration-500 md:-right-8 ${
-                scrollY > 0.1 ? "scale-100 opacity-100" : "scale-75 opacity-0"
-              }`}
+              className={`absolute -right-4 top-4 rounded-full bg-[#bee9e8] px-4 py-2 font-semibold text-[#1b4965] shadow-lg transition-all duration-500 md:-right-8 ${scrollY > 0.1 ? "scale-100 opacity-100" : "scale-75 opacity-0"
+                }`}
             >
               +{currentScore - 1080}
             </div>
@@ -104,9 +101,8 @@ export function HeroSection() {
 
           {/* Dynamic headline based on scroll */}
           <h1
-            className={`mt-6 max-w-3xl text-2xl font-medium text-white/90 transition-all duration-1000 md:text-3xl ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
+            className={`mt-6 max-w-3xl text-2xl font-medium text-white/90 transition-all duration-1000 md:text-3xl ${mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
             style={{ transitionDelay: "400ms" }}
           >
             {scrollY < 0.3 ? (
@@ -120,9 +116,8 @@ export function HeroSection() {
 
           {/* Subheadline */}
           <p
-            className={`mt-4 max-w-xl text-base text-white/60 transition-all duration-1000 md:text-lg ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
+            className={`mt-4 max-w-xl text-base text-white/60 transition-all duration-1000 md:text-lg ${mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
             style={{ transitionDelay: "600ms" }}
           >
             Scroll to see your transformation
@@ -131,9 +126,8 @@ export function HeroSection() {
 
         {/* Scroll indicator */}
         <div
-          className={`absolute bottom-12 flex flex-col items-center gap-2 transition-all duration-1000 ${
-            mounted && scrollY < 0.2 ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
+          className={`absolute bottom-12 flex flex-col items-center gap-2 transition-all duration-1000 ${mounted && scrollY < 0.2 ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            }`}
           style={{ transitionDelay: "800ms" }}
         >
           <span className="text-sm text-white/50">Scroll to explore</span>
@@ -158,11 +152,12 @@ export function HeroSection() {
             you learn.
           </p>
           <Link href="/signup">
-            <Button className="mt-10 rounded-full bg-[#bee9e8] px-10 py-7 text-lg font-semibold text-[#1b4965] shadow-xl transition-all hover:bg-white hover:shadow-2xl">
-              Start Your Free Trial
+            <Button className="group mt-10 rounded-full bg-[#bee9e8] px-10 py-7 text-lg font-semibold text-[#1b4965] shadow-xl transition-all hover:bg-white hover:shadow-2xl">
+              <Zap className="h-5 w-5 mr-2" />
+              Boost My Score Now
             </Button>
           </Link>
-          <p className="mt-4 text-sm text-white/50">No credit card required</p>
+          <p className="mt-4 text-sm text-white/50">No credit card required • Start seeing results in 7 days</p>
         </div>
       </div>
     </section>
