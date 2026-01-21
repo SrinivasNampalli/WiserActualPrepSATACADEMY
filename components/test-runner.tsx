@@ -179,6 +179,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                 time_taken_minutes: Math.round((test.duration_minutes * 60 - timeLeft) / 60),
                 completed_at: new Date().toISOString(),
                 category_stats: categoryStats,
+                user_answers: answers, // Store user's answers for mistake log
             }).select().single()
 
             if (error) throw error

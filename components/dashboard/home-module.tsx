@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,13 +14,29 @@ import {
     FileText,
     X,
     BookOpen,
+    ExternalLink,
 } from "lucide-react"
+import { getKhanAcademySearchUrl } from "@/lib/resource-links"
 
 interface HomeModuleProps {
     testResults: any[]
     summarizerHistory: any[]
     savedFlashcards?: any[]
     userId: string
+}
+
+interface ScheduleDay {
+    dayNumber: number
+    date: string
+    dayType: string
+    focus: string
+    tasks: { task: string; minutes: number; category: string }[]
+}
+
+interface StudyPlan {
+    days: ScheduleDay[]
+    satDate: string
+    daysUntil: number
 }
 
 // SAT Test Dates 2025-2026 (for countdown)
@@ -43,6 +59,30 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
     // UI State
     const [selectedSummary, setSelectedSummary] = useState<any>(null)
     const [showAllSummaries, setShowAllSummaries] = useState(false)
+    const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null)
+    const [todaysPlan, setTodaysPlan] = useState<ScheduleDay | null>(null)
+
+    // Load study plan from localStorage
+    useEffect(() => {
+        if (userId) {
+            const savedPlan = localStorage.getItem(`study_plan_account_${userId}`)
+            if (savedPlan) {
+                try {
+                    const parsed = JSON.parse(savedPlan) as StudyPlan
+                    setStudyPlan(parsed)
+
+                    // Find today's tasks
+                    const today = new Date().toISOString().split('T')[0]
+                    const todaySchedule = parsed.days.find(d => d.date === today)
+                    if (todaySchedule) {
+                        setTodaysPlan(todaySchedule)
+                    }
+                } catch (e) {
+                    console.error("Failed to load study plan:", e)
+                }
+            }
+        }
+    }, [userId])
 
     // Stats
     const nextSAT = SAT_DATES.find(d => d.date >= now)
@@ -104,6 +144,66 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Today's Study Plan Widget */}
+            {studyPlan && (
+                <Card className="border-2" style={{ borderColor: 'var(--theme-light)' }}>
+                    <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="h-5 w-5" style={{ color: 'var(--theme-base)' }} />
+                                <CardTitle>Today's Study Plan</CardTitle>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <a href="/study-planner" className="flex items-center gap-1" style={{ color: 'var(--theme-dark)' }}>
+                                    View Full Calendar <ChevronRight className="h-4 w-4" />
+                                </a>
+                            </Button>
+                        </div>
+                        {todaysPlan && (
+                            <CardDescription>{todaysPlan.focus}</CardDescription>
+                        )}
+                    </CardHeader>
+                    <CardContent>
+                        {todaysPlan ? (
+                            <div className="space-y-2">
+                                {todaysPlan.tasks.slice(0, 3).map((task, i) => (
+                                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 group">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--theme-base)' }} />
+                                            <span className="text-sm text-gray-700 truncate max-w-[200px]">{task.task}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="secondary" className="text-xs">{task.minutes}m</Badge>
+                                            <a
+                                                href={getKhanAcademySearchUrl(task.task)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-green-600 hover:text-green-700"
+                                                title="Study on Khan Academy"
+                                            >
+                                                <ExternalLink className="h-4 w-4" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                                {todaysPlan.tasks.length > 3 && (
+                                    <p className="text-xs text-gray-500 text-center pt-1">
+                                        + {todaysPlan.tasks.length - 3} more tasks — <a href="/study-planner" className="underline" style={{ color: 'var(--theme-dark)' }}>see all</a>
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center py-4">
+                                <p className="text-gray-500 text-sm mb-2">No tasks scheduled for today</p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <a href="/study-planner">View Full Calendar</a>
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Recent Summaries + Saved Flashcards */}
             <div className="grid md:grid-cols-2 gap-6">
@@ -170,31 +270,34 @@ export function HomeModule({ testResults, summarizerHistory, savedFlashcards = [
             </div>
 
             {/* Study Planner CTA */}
-            <Card className="border-2 border-theme-base/30 bg-gradient-to-br from-white to-blue-50">
-                <CardContent className="py-8">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#1B4B6B] to-[#2d6a8f] flex items-center justify-center">
-                                <CalendarIcon className="h-8 w-8 text-white" />
+            {/* Study Planner CTA - Only show if no plan exists */}
+            {!studyPlan && (
+                <Card className="border-2 border-theme-base/30 bg-gradient-to-br from-white to-blue-50">
+                    <CardContent className="py-8">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#1B4B6B] to-[#2d6a8f] flex items-center justify-center">
+                                    <CalendarIcon className="h-8 w-8 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800">AI Study Planner</h3>
+                                    <p className="text-gray-600">Get a personalized study schedule designed to help you achieve 1600</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-800">AI Study Planner</h3>
-                                <p className="text-gray-600">Get a personalized study schedule designed to help you achieve 1600</p>
-                            </div>
+                            <Button
+                                asChild
+                                className="whitespace-nowrap"
+                                style={{ backgroundColor: 'var(--theme-base)' }}
+                            >
+                                <a href="/study-planner">
+                                    <Sparkles className="h-4 w-4 mr-2" />
+                                    Create My Study Plan
+                                </a>
+                            </Button>
                         </div>
-                        <Button
-                            asChild
-                            className="whitespace-nowrap"
-                            style={{ backgroundColor: 'var(--theme-base)' }}
-                        >
-                            <a href="/study-planner">
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                Create My Study Plan
-                            </a>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            )}
 
 
             {/* Summary Modals */}

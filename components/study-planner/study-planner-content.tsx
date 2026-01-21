@@ -21,9 +21,12 @@ import {
     ArrowRight,
     Lock,
     LogIn,
-    Crown
+    Crown,
+    ExternalLink,
+    X
 } from "lucide-react"
 import { satCategories, allSATTopics, recommendedProgression, type SATTopic } from "@/lib/sat-topics"
+import { getKhanAcademySearchUrl } from "@/lib/resource-links"
 
 interface ScheduleDay {
     dayNumber: number
@@ -60,16 +63,32 @@ export function StudyPlannerContent({ userId, isPremium }: StudyPlannerContentPr
     const [error, setError] = useState("")
     const [hasExistingPlan, setHasExistingPlan] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [selectedDay, setSelectedDay] = useState<ScheduleDay | null>(null)
+    const [satDatePassed, setSatDatePassed] = useState(false)
 
-    // Load existing plan on mount (one per account)
+    // Load existing plan on mount - check if SAT date has passed
     useEffect(() => {
         if (userId) {
             const savedPlan = localStorage.getItem(`study_plan_account_${userId}`)
             if (savedPlan) {
                 try {
-                    const parsed = JSON.parse(savedPlan)
-                    setSchedule(parsed)
-                    setHasExistingPlan(true)
+                    const parsed = JSON.parse(savedPlan) as GeneratedSchedule
+                    const satTestDate = new Date(parsed.satDate)
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+
+                    // Check if SAT date has passed
+                    if (satTestDate < today) {
+                        // SAT date passed - clear the old plan so user can generate new one
+                        localStorage.removeItem(`study_plan_account_${userId}`)
+                        setSatDatePassed(true)
+                        setHasExistingPlan(false)
+                        setSchedule(null)
+                    } else {
+                        // Still valid - load the plan
+                        setSchedule(parsed)
+                        setHasExistingPlan(true)
+                    }
                 } catch (e) {
                     console.error("Failed to parse saved plan:", e)
                 }
@@ -508,99 +527,306 @@ export function StudyPlannerContent({ userId, isPremium }: StudyPlannerContentPr
                                         </p>
                                     </div>
                                 </div>
-                                <Button variant="outline" onClick={() => setSchedule(null)}>
-                                    ← Generate New Schedule
-                                </Button>
+                                <div className="flex gap-2">
+                                    {/* Plan is locked until SAT date passes */}
+                                    <div className="text-sm text-green-700 bg-green-100 px-3 py-2 rounded-md flex items-center">
+                                        <Lock className="h-4 w-4 mr-2" />
+                                        Schedule locked until test day
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
 
                         {/* Weekly Goals */}
-                        {schedule.weeklyGoals && schedule.weeklyGoals.length > 0 && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Target className="h-5 w-5 text-[#1B4B6B]" />
-                                        Weekly Goals
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-2">
-                                        {schedule.weeklyGoals.map((goal, i) => (
-                                            <li key={i} className="flex items-center gap-2">
-                                                <ArrowRight className="h-4 w-4 text-[#1B4B6B]" />
-                                                {goal}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                            </Card>
-                        )}
+                        {
+                            schedule.weeklyGoals && schedule.weeklyGoals.length > 0 && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Target className="h-5 w-5 text-[#1B4B6B]" />
+                                            Weekly Goals
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ul className="space-y-2">
+                                            {schedule.weeklyGoals.map((goal, i) => (
+                                                <li key={i} className="flex items-center gap-2">
+                                                    <ArrowRight className="h-4 w-4 text-[#1B4B6B]" />
+                                                    {goal}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
 
-                        {/* Daily Schedule */}
+                        {/* Calendar Grid View */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <BookOpen className="h-5 w-5 text-[#1B4B6B]" />
-                                    Daily Study Plan
+                                    <Calendar className="h-5 w-5" style={{ color: 'var(--theme-base)' }} />
+                                    Study Calendar
                                 </CardTitle>
+                                <div className="flex gap-4 text-sm text-gray-500 mt-2">
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-3 h-3 rounded-full bg-blue-500" /> New Content
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-3 h-3 rounded-full bg-green-500" /> Practice
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-3 h-3 rounded-full bg-purple-500" /> Review
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-3 h-3 rounded-full bg-gray-400" /> Rest
+                                    </span>
+                                </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    {schedule.days.map((day) => (
-                                        <div key={day.dayNumber} className="border rounded-lg overflow-hidden">
-                                            <div className="flex items-center gap-3 px-4 py-3 bg-gray-50">
-                                                <div className={`w-3 h-3 rounded-full ${getDayTypeColor(day.dayType)}`} />
-                                                <div className="flex-1">
-                                                    <span className="font-semibold">Day {day.dayNumber}</span>
-                                                    <span className="text-gray-500 ml-2">
-                                                        {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                                    </span>
-                                                </div>
-                                                <Badge variant="outline" className="capitalize">
-                                                    {day.dayType.replace('_', ' ')}
-                                                </Badge>
-                                            </div>
-                                            <div className="px-4 py-3">
-                                                <p className="font-medium text-[#1B4B6B] mb-2">{day.focus}</p>
-                                                <ul className="space-y-1">
-                                                    {day.tasks.map((task, i) => (
-                                                        <li key={i} className="flex items-center justify-between text-sm">
-                                                            <span className="text-gray-600">• {task.task}</span>
-                                                            <span className="text-gray-400">{task.minutes} min</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
+                                {/* Day of week headers */}
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                                            {day}
                                         </div>
                                     ))}
+                                </div>
+
+                                {/* Calendar grid */}
+                                <div className="space-y-1">
+                                    {(() => {
+                                        // Build calendar weeks from schedule days
+                                        const today = new Date()
+                                        today.setHours(0, 0, 0, 0)
+                                        const satDate = new Date(schedule.satDate)
+
+                                        // Create a map of dates to schedule days
+                                        const dayMap = new Map<string, ScheduleDay>()
+                                        schedule.days.forEach(day => {
+                                            dayMap.set(day.date, day)
+                                        })
+
+                                        // Find the first day (start of week containing today)
+                                        const startDate = new Date(today)
+                                        startDate.setDate(startDate.getDate() - startDate.getDay())
+
+                                        // Find the last day (end of week containing SAT date)
+                                        const endDate = new Date(satDate)
+                                        endDate.setDate(endDate.getDate() + (6 - endDate.getDay()))
+
+                                        const weeks: Date[][] = []
+                                        let currentDate = new Date(startDate)
+
+                                        while (currentDate <= endDate) {
+                                            const week: Date[] = []
+                                            for (let i = 0; i < 7; i++) {
+                                                week.push(new Date(currentDate))
+                                                currentDate.setDate(currentDate.getDate() + 1)
+                                            }
+                                            weeks.push(week)
+                                        }
+
+                                        let currentMonth = -1
+
+                                        return weeks.map((week, weekIndex) => {
+                                            const firstDayOfWeek = week[0]
+                                            const showMonthHeader = firstDayOfWeek.getMonth() !== currentMonth
+                                            if (showMonthHeader) {
+                                                currentMonth = firstDayOfWeek.getMonth()
+                                            }
+
+                                            return (
+                                                <div key={weekIndex}>
+                                                    {showMonthHeader && (
+                                                        <div className="text-lg font-bold text-gray-800 py-2 mt-4 first:mt-0 border-b border-gray-200 mb-2">
+                                                            {firstDayOfWeek.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                                        </div>
+                                                    )}
+                                                    <div className="grid grid-cols-7 gap-1">
+                                                        {week.map((date, dayIndex) => {
+                                                            const dateStr = date.toISOString().split('T')[0]
+                                                            const scheduleDay = dayMap.get(dateStr)
+                                                            const isToday = date.getTime() === today.getTime()
+                                                            const isSatDate = date.getTime() === satDate.getTime()
+                                                            const isPast = date < today
+                                                            const isOutOfRange = date < today || date > satDate
+
+                                                            // Get top 3 tasks for this day
+                                                            const topTasks = scheduleDay?.tasks?.slice(0, 3) || []
+
+                                                            return (
+                                                                <div
+                                                                    key={dayIndex}
+                                                                    onClick={() => scheduleDay && !isOutOfRange && setSelectedDay(scheduleDay)}
+                                                                    className={`
+                                                                        min-h-[120px] p-2 rounded-lg border-2 transition-all
+                                                                        ${isToday ? 'border-[var(--theme-base)] bg-[color-mix(in_srgb,var(--theme-base)_10%,white)] ring-2 ring-[var(--theme-base)]/30' : 'border-gray-200'}
+                                                                        ${isSatDate ? 'border-red-500 bg-red-50' : ''}
+                                                                        ${isPast && !isToday ? 'opacity-50 bg-gray-50' : 'bg-white'}
+                                                                        ${isOutOfRange && !isToday && !isSatDate ? 'opacity-30' : ''}
+                                                                        ${scheduleDay && !isOutOfRange ? 'hover:shadow-lg hover:scale-[1.02] cursor-pointer' : 'cursor-default'}
+                                                                        hover:shadow-md
+                                                                    `}
+                                                                    title={scheduleDay ? "Click to see details & resources" : ''}
+                                                                >
+                                                                    {/* Date header */}
+                                                                    <div className="flex items-center justify-between mb-1">
+                                                                        <span className={`text-sm font-bold ${isToday ? 'text-[var(--theme-dark)]' : isSatDate ? 'text-red-600' : 'text-gray-700'}`}>
+                                                                            {date.getDate()}
+                                                                        </span>
+                                                                        {scheduleDay && (
+                                                                            <span className={`w-2 h-2 rounded-full ${getDayTypeColor(scheduleDay.dayType)}`} />
+                                                                        )}
+                                                                        {isSatDate && (
+                                                                            <Badge className="text-[10px] px-1 py-0 bg-red-500 text-white">SAT</Badge>
+                                                                        )}
+                                                                        {isToday && !isSatDate && (
+                                                                            <Badge className="text-[10px] px-1 py-0" style={{ backgroundColor: 'var(--theme-base)', color: 'white' }}>Today</Badge>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Task bullet points */}
+                                                                    {scheduleDay && !isOutOfRange && (
+                                                                        <ul className="space-y-0.5">
+                                                                            {topTasks.map((task, i) => (
+                                                                                <li key={i} className="text-[10px] leading-tight text-gray-600 truncate">
+                                                                                    <span className="text-[var(--theme-base)]">•</span>{' '}
+                                                                                    {task.task.length > 25 ? task.task.substring(0, 22) + '...' : task.task}
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    )}
+
+                                                                    {/* Rest day indicator */}
+                                                                    {scheduleDay?.dayType === 'rest_day' && (
+                                                                        <p className="text-[10px] text-gray-400 italic mt-1">Rest Day</p>
+                                                                    )}
+
+                                                                    {/* Click hint */}
+                                                                    {scheduleDay && !isOutOfRange && scheduleDay.dayType !== 'rest_day' && (
+                                                                        <p className="text-[8px] text-gray-400 mt-1 flex items-center gap-0.5">
+                                                                            <ExternalLink className="w-2 h-2" /> Click for links
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })
+                                    })()}
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Exam Tips */}
-                        {schedule.examTips && schedule.examTips.length > 0 && (
-                            <Card className="bg-amber-50 border-amber-200">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 text-amber-800">
-                                        <Sparkles className="h-5 w-5" />
-                                        Pro Tips for Success
-                                    </CardTitle>
+                        {
+                            schedule.examTips && schedule.examTips.length > 0 && (
+                                <Card className="bg-amber-50 border-amber-200">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-amber-800">
+                                            <Sparkles className="h-5 w-5" />
+                                            Pro Tips for Success
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ul className="space-y-2">
+                                            {schedule.examTips.map((tip, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-amber-700">
+                                                    <span className="text-amber-500">💡</span>
+                                                    {tip}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
+                    </div >
+                )
+                }
+
+                {/* Day Details Modal */}
+                {
+                    selectedDay && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedDay(null)}>
+                            <Card className="w-full max-w-lg max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+                                <CardHeader className="sticky top-0 bg-white z-10 border-b">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <Calendar className="h-5 w-5" style={{ color: 'var(--theme-base)' }} />
+                                                Day {selectedDay.dayNumber}
+                                            </CardTitle>
+                                            <CardDescription>
+                                                {new Date(selectedDay.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                            </CardDescription>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => setSelectedDay(null)}>
+                                            <X className="h-5 w-5" />
+                                        </Button>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className={`w-3 h-3 rounded-full ${getDayTypeColor(selectedDay.dayType)}`} />
+                                        <Badge variant="outline" className="capitalize">{selectedDay.dayType.replace('_', ' ')}</Badge>
+                                    </div>
                                 </CardHeader>
-                                <CardContent>
-                                    <ul className="space-y-2">
-                                        {schedule.examTips.map((tip, i) => (
-                                            <li key={i} className="flex items-start gap-2 text-amber-700">
-                                                <span className="text-amber-500">💡</span>
-                                                {tip}
-                                            </li>
+                                <CardContent className="pt-6 space-y-4">
+                                    <div>
+                                        <h3 className="font-semibold text-lg mb-3" style={{ color: 'var(--theme-dark)' }}>{selectedDay.focus}</h3>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                                            <Target className="h-4 w-4" />
+                                            Today's Tasks
+                                        </h4>
+                                        {selectedDay.tasks.map((task, i) => (
+                                            <div key={i} className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                                                <div className="flex items-start justify-between">
+                                                    <p className="font-medium text-gray-800">{task.task}</p>
+                                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                                        <Clock className="h-3 w-3 mr-1" />
+                                                        {task.minutes}m
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <a
+                                                        href={getKhanAcademySearchUrl(task.task)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                                    >
+                                                        <ExternalLink className="h-3 w-3" />
+                                                        Khan Academy
+                                                    </a>
+                                                    <a
+                                                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(task.task + " SAT prep")}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                                                    >
+                                                        <ExternalLink className="h-3 w-3" />
+                                                        YouTube
+                                                    </a>
+                                                </div>
+                                            </div>
                                         ))}
-                                    </ul>
+                                    </div>
+
+                                    <div className="pt-4 border-t">
+                                        <Button className="w-full" style={{ background: 'var(--theme-gradient)' }} onClick={() => setSelectedDay(null)}>
+                                            Got it! Back to Calendar
+                                        </Button>
+                                    </div>
                                 </CardContent>
                             </Card>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
+                        </div>
+                    )
+                }
+            </div >
+        </div >
     )
 }

@@ -86,9 +86,6 @@ export function SecretAdminDashboard({
     const [expandedTest, setExpandedTest] = useState<string | null>(null)
     const [testQuestions, setTestQuestions] = useState<Record<string, any[]>>({})
 
-    // PDF parsing state
-    const [pdfText, setPdfText] = useState("")
-    const [isParsingPdf, setIsParsingPdf] = useState(false)
 
     // Manual question creation state
     const [manualQuestion, setManualQuestion] = useState<ParsedQuestion>({
@@ -343,71 +340,7 @@ export function SecretAdminDashboard({
         }
     }
 
-    // Handle PDF file upload and extract text
-    const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
 
-        if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
-            setParseError("Please upload a PDF file")
-            return
-        }
-
-        // For now, we'll use a simple approach - extract text client-side
-        // In production, you'd want server-side PDF parsing
-        const reader = new FileReader()
-        reader.onload = async (event) => {
-            setParseError("")
-            // Since we can't parse PDF directly in browser without a library,
-            // we'll prompt user to paste the text
-            setParseError("PDF uploaded! Please copy the text from your PDF and paste it in the text area below, then click 'Parse PDF Text'.")
-        }
-        reader.readAsArrayBuffer(file)
-    }
-
-    // Parse questions from PDF text using AI
-    const parsePdfQuestions = async () => {
-        if (!pdfText.trim()) {
-            setParseError("Please paste the PDF text first")
-            return
-        }
-
-        setIsParsingPdf(true)
-        setParseError("")
-
-        try {
-            const response = await fetch("/api/secret-admin/parse-pdf", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    pdfText: pdfText,
-                    category: questionCategory,
-                    difficulty: questionDifficulty,
-                }),
-            })
-
-            const result = await response.json()
-
-            if (result.success && result.questions) {
-                setParsedQuestions([...parsedQuestions, ...result.questions])
-                setPdfText("")
-                setParseError("")
-
-                if (result.questions.length === 0) {
-                    setParseError("No questions found. Make sure the text contains SAT-style questions.")
-                } else {
-                    alert(`Successfully parsed ${result.questions.length} questions!`)
-                }
-            } else {
-                setParseError("Failed to parse: " + (result.error || "Unknown error"))
-            }
-        } catch (error) {
-            console.error("PDF parsing error:", error)
-            setParseError("Failed to parse PDF text. Please try again.")
-        } finally {
-            setIsParsingPdf(false)
-        }
-    }
 
     // Handle manual question image upload
     const handleManualImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1013,55 +946,7 @@ Next question...`}
                             </CardContent>
                         </Card>
 
-                        {/* PDF Upload Section */}
-                        <Card className="bg-gray-800 border-gray-700">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileUp className="h-5 w-5 text-[#4ECDC4]" />
-                                    Bulk Import from PDF / Google Docs
-                                </CardTitle>
-                                <CardDescription className="text-gray-400">
-                                    Copy text from your PDF or Google Doc and paste below to auto-parse questions
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <Textarea
-                                    value={pdfText}
-                                    onChange={(e) => setPdfText(e.target.value)}
-                                    placeholder="Paste your PDF text or Google Doc content here...
 
-Example format:
-1. What is 2 + 2?
-A) 3
-B) 4
-C) 5
-D) 6
-
-2. Which sentence is grammatically correct?
-A) Him and I went...
-..."
-                                    className="bg-gray-900 border-gray-600 text-white min-h-[200px] font-mono text-sm"
-                                />
-
-                                <Button
-                                    onClick={parsePdfQuestions}
-                                    disabled={isParsingPdf || !pdfText.trim()}
-                                    className="w-full bg-gradient-to-r from-[#4ECDC4] to-[#1B4B6B] hover:opacity-90 text-white"
-                                >
-                                    {isParsingPdf ? (
-                                        <>
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            Parsing with AI...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FileUp className="h-4 w-4 mr-2" />
-                                            Parse PDF Text ({pdfText.split('\n').filter(l => l.trim()).length} lines)
-                                        </>
-                                    )}
-                                </Button>
-                            </CardContent>
-                        </Card>
 
                         {/* Manual Question Creator */}
                         <Card className="bg-gray-800 border-gray-700">
@@ -1212,6 +1097,19 @@ A) Him and I went...
                                     </div>
                                 </div>
 
+                                {/* Explanation */}
+                                <div>
+                                    <Label className="text-gray-300">Explanation (Optional)</Label>
+                                    <Textarea
+                                        value={manualQuestion.explanation || ""}
+                                        onChange={(e) => setManualQuestion({ ...manualQuestion, explanation: e.target.value })}
+                                        placeholder="Explain why the correct answer is right and why other options are wrong..."
+                                        className="bg-gray-900 border-gray-600 text-white mt-1"
+                                        rows={3}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">This explanation will be shown in the mistake log after test completion</p>
+                                </div>
+
                                 {parseError && (
                                     <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
                                         <p className="text-red-400 text-sm whitespace-pre-wrap">{parseError}</p>
@@ -1331,6 +1229,18 @@ A) Him and I went...
                                                         </Button>
                                                     ))}
                                                 </div>
+                                            </div>
+
+                                            {/* Explanation */}
+                                            <div>
+                                                <Label className="text-gray-400">Explanation:</Label>
+                                                <Textarea
+                                                    value={q.explanation || ""}
+                                                    onChange={(e) => updateParsedQuestion(index, "explanation", e.target.value)}
+                                                    placeholder="Explain why the correct answer is right..."
+                                                    className="bg-gray-800 border-gray-600 text-white text-sm mt-1"
+                                                    rows={2}
+                                                />
                                             </div>
                                         </div>
                                     ))}
