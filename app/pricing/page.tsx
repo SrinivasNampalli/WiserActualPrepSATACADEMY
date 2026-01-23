@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Check, X, Minus } from "lucide-react"
+import { Check, X, Loader2 } from "lucide-react"
 import { PRODUCTS } from "@/lib/products"
 import { Checkout } from "@/components/checkout"
+import { createClient } from "@/lib/supabase/client"
 
 // Competitor comparison data
 const comparisonFeatures = [
@@ -36,6 +37,49 @@ function ComparisonCell({ value }: { value: boolean | string }) {
 export default function PricingPage() {
   const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // Check if user is logged in on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      setAuthChecked(true)
+    }
+    checkAuth()
+  }, [])
+
+  const handleUpgradeClick = async (productId: string) => {
+    setIsCheckingAuth(true)
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      // Redirect to login with return URL
+      router.push(`/login?redirect=/pricing&plan=${productId}`)
+      return
+    }
+
+    setSelectedPlan(productId)
+    setIsCheckingAuth(false)
+  }
+
+  // Handle redirect back from login with plan parameter
+  useEffect(() => {
+    if (authChecked && user) {
+      const urlParams = new URLSearchParams(window.location.search)
+      const planFromUrl = urlParams.get('plan')
+      if (planFromUrl) {
+        setSelectedPlan(planFromUrl)
+        // Clean up URL
+        window.history.replaceState({}, '', '/pricing')
+      }
+    }
+  }, [authChecked, user])
 
   if (selectedPlan) {
     return (
@@ -102,10 +146,15 @@ export default function PricingPage() {
               <CardFooter>
                 <Button
                   variant={product.popular ? "default" : "outline"}
-                  onClick={() => product.priceInCents === 0 ? router.push("/signup") : setSelectedPlan(product.id)}
+                  onClick={() => product.priceInCents === 0 ? router.push("/signup") : handleUpgradeClick(product.id)}
+                  disabled={isCheckingAuth}
                   className={product.popular ? "w-full bg-theme-base hover:bg-theme-dark text-white" : "w-full"}
                 >
-                  {product.priceInCents === 0 ? "Get Started Free" : "Upgrade to Premium"}
+                  {isCheckingAuth ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Checking...</>
+                  ) : (
+                    product.priceInCents === 0 ? "Get Started Free" : "Upgrade to Premium"
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -180,8 +229,8 @@ export default function PricingPage() {
                 <Button onClick={() => router.push("/signup")} variant="outline" className="border-white text-white hover:bg-white/10">
                   Start Free
                 </Button>
-                <Button onClick={() => setSelectedPlan("premium-plan")} className="bg-theme-base hover:bg-theme-dark text-white">
-                  Get Premium - $15/mo
+                <Button onClick={() => handleUpgradeClick("premium-plan")} className="bg-theme-base hover:bg-theme-dark text-white">
+                  Get Premium - $9/mo
                 </Button>
               </div>
             </CardContent>
