@@ -5,12 +5,10 @@ import { createClient } from "@/lib/supabase/client"
 
 // Feature limits for free users
 export const FREE_LIMITS = {
-    ai_solver: 5,           // 5 questions per day
-    ai_summarizer: 3,       // 3 summaries/chatbot responses per day
-    flashcard_sets: 1,      // 1 set total (was 2)
-    practice_questions: 100, // 100 questions total
-    mock_tests: 1,          // 1 sample test
-    study_planner: 0,       // Not accessible for free users
+    ai_summarizer: 3,       // 3 chatbot/AI messages per day
+    flashcard_sets: 1,      // 1 flashcard set total
+    quizzes: 3,             // 3 free quizzes total
+    study_planner: 0,       // Premium only - not accessible for free users
 }
 
 export type SubscriptionTier = 'free' | 'premium'

@@ -13,29 +13,29 @@ export const PRODUCTS: Product[] = [
     id: "free-plan",
     name: "Free",
     description: "Get started with essential SAT prep tools",
-    priceInCents: 0, // Free
+    priceInCents: 0,
     features: [
-      "100 practice questions",
-      "Basic AI question solver",
-      "Limited flashcard generation",
-      "Progress tracking",
-      "Community support",
+      "3 AI chatbot messages per day",
+      "1 flashcard set",
+      "3 practice quizzes",
+      "All games free",
+      "Basic progress tracking",
     ],
   },
   {
     id: "premium-plan",
     name: "Premium",
-    description: "Unlimited access to all features",
-    priceInCents: 1500, // $15
+    description: "Everything you need to ace the SAT",
+    priceInCents: 899, // $8.99
     features: [
-      "Unlimited practice questions",
-      "Full AI-powered tutoring",
-      "Unlimited flashcards & summarizer",
-      "Real SAT mock tests",
-      "Personalized study plans",
+      "Unlimited AI tutoring",
+      "Unlimited flashcards",
+      "All practice tests",
+      "Personalized study calendar",
       "Priority support",
-      "200+ point score guarantee",
+      "200+ point guarantee",
     ],
     popular: true,
   },
 ]
+

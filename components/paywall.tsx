@@ -65,7 +65,7 @@ export function Paywall({ feature, children, title, description }: PaywallProps)
                 </Button>
 
                 <p className="text-xs text-gray-500">
-                    Only $15/month • Unlimited access • Cancel anytime
+                    Only $8.99/month • Unlimited access • Cancel anytime
                 </p>
             </CardContent>
         </Card>

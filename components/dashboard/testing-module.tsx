@@ -18,11 +18,14 @@ import {
   Zap,
   BarChart3,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Lock,
+  Crown
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useThemeContext } from "@/lib/theme-context"
+import { useSubscription, FREE_LIMITS } from "@/lib/subscription-context"
 
 interface TestingModuleProps {
   testResults: any[]
@@ -33,7 +36,11 @@ interface TestingModuleProps {
 export function TestingModule({ testResults, userId, availableTests = [] }: TestingModuleProps) {
   const router = useRouter()
   const { theme } = useThemeContext()
+  const { isPremium } = useSubscription()
   const [activeTab, setActiveTab] = useState<"math" | "english" | "full">("math")
+
+  // Free users get first 3 quizzes only
+  const FREE_QUIZ_LIMIT = FREE_LIMITS.quizzes || 3
 
   const startTemplateTest = (testId: string) => {
     router.push(`/test/${testId}`)
@@ -77,16 +84,40 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
       (r.correct_answers / r.total_questions) > (best.correct_answers / best.total_questions) ? r : best
       , testScores[0]) : null
 
+    // Check if test is locked for free users (only first 3 tests are free)
+    const isLocked = !isPremium && index >= FREE_QUIZ_LIMIT
+
     return (
       <div
         key={test.id}
-        className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+        className={`group relative overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${isLocked
+            ? 'border-slate-300 opacity-75'
+            : 'border-slate-200 hover:shadow-xl hover:-translate-y-1'
+          }`}
       >
         {/* Top accent bar - uses theme colors */}
         <div
           className="h-1.5"
-          style={{ background: theme.gradient }}
+          style={{ background: isLocked ? '#94a3b8' : theme.gradient }}
         />
+
+        {/* Premium lock overlay */}
+        {isLocked && (
+          <div className="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center">
+            <Lock className="h-8 w-8 text-amber-500 mb-2" />
+            <p className="text-sm font-medium text-slate-600 mb-2">Premium Only</p>
+            <Button
+              size="sm"
+              asChild
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            >
+              <a href="/pricing">
+                <Crown className="h-4 w-4 mr-1" />
+                Upgrade
+              </a>
+            </Button>
+          </div>
+        )}
 
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
@@ -133,6 +164,7 @@ export function TestingModule({ testResults, userId, availableTests = [] }: Test
               style={{
                 background: isCompleted ? '#f59e0b' : theme.gradient
               }}
+              disabled={isLocked}
             >
               {isCompleted ? (
                 <>
