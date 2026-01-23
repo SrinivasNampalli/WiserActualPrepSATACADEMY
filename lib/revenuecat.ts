@@ -4,8 +4,8 @@ import { Purchases, type CustomerInfo, type Package, type PurchasesError, ErrorC
 
 let purchasesInstance: Purchases | null = null
 
-// Initialize RevenueCat with a user ID
-export function initializeRevenueCat(appUserId: string): Purchases {
+// Initialize RevenueCat with a user ID (or anonymous if not provided)
+export function initializeRevenueCat(appUserId?: string): Purchases {
     if (!process.env.NEXT_PUBLIC_REVENUECAT_API_KEY) {
         throw new Error("NEXT_PUBLIC_REVENUECAT_API_KEY is not set")
     }
@@ -14,9 +14,11 @@ export function initializeRevenueCat(appUserId: string): Purchases {
         return purchasesInstance
     }
 
+    const userId = appUserId || Purchases.generateRevenueCatAnonymousAppUserId()
+
     purchasesInstance = Purchases.configure({
         apiKey: process.env.NEXT_PUBLIC_REVENUECAT_API_KEY,
-        appUserId: appUserId,
+        appUserId: userId,
     })
 
     return purchasesInstance
