@@ -1,122 +1,109 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { Purchases, ErrorCode, type PurchasesError } from "@revenuecat/purchases-js"
+import { useState } from "react"
+import { loadStripe } from "@stripe/stripe-js"
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 
-interface RevenueCatCheckoutProps {
-  onSuccess?: () => void
-  onCancel?: () => void
+// Initialize Stripe outside component to avoid recreation
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+interface CheckoutProps {
+  productId: string
 }
 
-export function RevenueCatCheckout({ onSuccess, onCancel }: RevenueCatCheckoutProps) {
-  const paywallContainerRef = useRef<HTMLDivElement>(null)
-  const [status, setStatus] = useState<"loading" | "ready" | "success" | "error">("loading")
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const purchasesRef = useRef<Purchases | null>(null)
+export function Checkout({ productId }: CheckoutProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let isActive = true
+  const handleCheckout = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      console.log("Starting checkout process...")
 
-    async function initAndShowPaywall() {
-      try {
-        // Get current user
-        const supabase = createClient()
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+      const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID
+      console.log("Price ID:", priceId)
 
-        if (authError || !user) {
-          throw new Error("You must be logged in to subscribe")
-        }
-
-        // Check for API key
-        if (!process.env.NEXT_PUBLIC_REVENUECAT_API_KEY) {
-          throw new Error("Payment system is not configured. Please contact support.")
-        }
-
-        // Initialize RevenueCat with user's Supabase ID
-        const purchases = Purchases.configure({
-          apiKey: process.env.NEXT_PUBLIC_REVENUECAT_API_KEY,
-          appUserId: user.id,
-        })
-
-        purchasesRef.current = purchases
-
-        if (!isActive || !paywallContainerRef.current) return
-
-        setStatus("ready")
-
-        // Present the RevenueCat paywall
-        const result = await purchases.presentPaywall({
-          htmlTarget: paywallContainerRef.current,
-        })
-
-        if (!isActive) return
-
-        // Handle successful purchase
-        if (result.customerInfo) {
-          const isPremium = Object.keys(result.customerInfo.entitlements.active).includes("premium")
-
-          if (isPremium) {
-            // Update user profile in Supabase
-            await supabase
-              .from("profiles")
-              .update({
-                subscription_tier: "premium",
-                is_premium: true,
-                revenuecat_customer_id: user.id,
-                subscription_updated_at: new Date().toISOString(),
-              })
-              .eq("id", user.id)
-
-            setStatus("success")
-            onSuccess?.()
-          }
-        }
-      } catch (error: any) {
-        if (!isActive) return
-
-        console.error("RevenueCat checkout error:", error)
-
-        // Handle specific error types
-        if (error instanceof Error && "errorCode" in error) {
-          const purchaseError = error as PurchasesError
-          if (purchaseError.errorCode === ErrorCode.UserCancelledError) {
-            onCancel?.()
-            return
-          }
-        }
-
-        setErrorMessage(error.message || "An error occurred during checkout")
-        setStatus("error")
+      if (!priceId) {
+        throw new Error("Stripe Price ID is not configured. Please add NEXT_PUBLIC_STRIPE_PRICE_ID to .env.local")
       }
+
+      console.log("Sending request to /api/stripe/checkout")
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          priceId,
+        }),
+      })
+
+      const data = await response.json()
+      console.log("Response data:", data)
+
+      if (!response.ok) {
+        throw new Error(data.error || "Checkout failed")
+      }
+
+      if (data.url) {
+        console.log("Redirecting to:", data.url)
+        window.location.href = data.url
+        return
+      }
+
+      // Fallback for debugging (shouldn't be reached if API returns URL)
+      console.log("No URL returned, checking Stripe object")
+      const stripe = await stripePromise
+      if (!stripe) throw new Error("Stripe failed to load")
+
+      // Deprecated method fallback
+      console.warn("Using deprecated redirectToCheckout")
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        sessionId: data.sessionId,
+      })
+
+      if (stripeError) {
+        throw new Error(stripeError.message)
+      }
+    } catch (err: any) {
+      console.error("Checkout error:", err)
+      setError(err.message || "An error occurred during checkout")
+    } finally {
+      setLoading(false)
     }
+  }
 
-    initAndShowPaywall()
+  // Check for success/canceled query params
+  const urlParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
+  const success = urlParams.get("success")
+  const canceled = urlParams.get("canceled")
 
-    return () => {
-      isActive = false
-    }
-  }, [onSuccess, onCancel])
-
-  if (status === "loading") {
+  if (success) {
     return (
       <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-theme-base mb-4" />
-        <p className="text-gray-600">Loading payment options...</p>
+        <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Premium!</h3>
+        <p className="text-gray-600 text-center">Your subscription is now active. Enjoy unlimited access!</p>
+        <button
+          onClick={() => window.location.href = "/dashboard"}
+          className="mt-6 px-6 py-2 bg-theme-base text-white rounded-lg hover:bg-theme-dark transition-colors"
+        >
+          Go to Dashboard
+        </button>
       </div>
     )
   }
 
-  if (status === "error") {
+  if (canceled) {
     return (
       <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-h-[400px]">
-        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
-        <p className="text-gray-600 text-center">{errorMessage}</p>
+        <AlertCircle className="h-12 w-12 text-yellow-500 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Checkout Canceled</h3>
+        <p className="text-gray-600 text-center">Your payment was not processed. No charges were made.</p>
         <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-theme-base text-white rounded-lg hover:bg-theme-dark"
+          onClick={() => window.location.href = "/pricing"}
+          className="mt-6 px-6 py-2 bg-theme-base text-white rounded-lg hover:bg-theme-dark transition-colors"
         >
           Try Again
         </button>
@@ -124,28 +111,39 @@ export function RevenueCatCheckout({ onSuccess, onCancel }: RevenueCatCheckoutPr
     )
   }
 
-  if (status === "success") {
-    return (
-      <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-h-[400px]">
-        <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Premium!</h3>
-        <p className="text-gray-600 text-center">Your subscription is now active. Enjoy unlimited access!</p>
-      </div>
-    )
-  }
-
   return (
-    <div
-      id="revenuecat-paywall"
-      ref={paywallContainerRef}
-      className="bg-white rounded-lg p-8 min-h-[400px]"
-    >
-      {/* RevenueCat paywall will be injected here */}
+    <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-h-[400px] shadow-xl">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Upgrade to Premium</h2>
+
+      <div className="text-center mb-8">
+        <p className="text-4xl font-bold text-theme-base mb-2">$8.99<span className="text-lg text-gray-500 font-normal">/month</span></p>
+        <p className="text-gray-600">Cancel anytime. 200+ point increase guarantee.</p>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 text-sm max-w-md w-full">
+          {error}
+        </div>
+      )}
+
+      <button
+        onClick={handleCheckout}
+        disabled={loading}
+        className="w-full max-w-md py-4 bg-gradient-to-r from-theme-base to-theme-dark text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Redirecting to Stripe...
+          </>
+        ) : (
+          "Secure Checkout with Stripe"
+        )}
+      </button>
+
+      <p className="mt-4 text-xs text-gray-400">
+        Secured by Stripe. We do not store your credit card information.
+      </p>
     </div>
   )
-}
-
-// Keep the old Checkout export for backwards compatibility, but use new component
-export function Checkout({ productId }: { productId: string }) {
-  return <RevenueCatCheckout />
 }
