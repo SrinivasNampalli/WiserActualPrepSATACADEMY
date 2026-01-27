@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { loadStripe } from "@stripe/stripe-js"
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react"
 
@@ -69,10 +69,14 @@ export function Checkout({ productId }: CheckoutProps) {
     } catch (err: any) {
       console.error("Checkout error:", err)
       setError(err.message || "An error occurred during checkout")
-    } finally {
-      setLoading(false)
+      setLoading(false) // Only stop loading on error, otherwise keep loading while redirecting
     }
   }
+
+  // Auto-redirect on mount
+  useEffect(() => {
+    handleCheckout()
+  }, [])
 
   // Check for success/canceled query params
   const urlParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "")
@@ -120,28 +124,25 @@ export function Checkout({ productId }: CheckoutProps) {
         <p className="text-gray-600">Cancel anytime. 200+ point increase guarantee.</p>
       </div>
 
-      {error && (
+      {error ? (
         <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 text-sm max-w-md w-full">
           {error}
+          <button
+            onClick={handleCheckout}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center text-center">
+          <Loader2 className="h-8 w-8 text-theme-base animate-spin mb-4" />
+          <p className="text-lg font-medium text-gray-700">Redirecting to secure payment...</p>
+          <p className="text-sm text-gray-500 mt-2">Please wait a moment.</p>
         </div>
       )}
 
-      <button
-        onClick={handleCheckout}
-        disabled={loading}
-        className="w-full max-w-md py-4 bg-gradient-to-r from-theme-base to-theme-dark text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            Redirecting to Stripe...
-          </>
-        ) : (
-          "Secure Checkout with Stripe"
-        )}
-      </button>
-
-      <p className="mt-4 text-xs text-gray-400">
+      <p className="mt-8 text-xs text-gray-400">
         Secured by Stripe. We do not store your credit card information.
       </p>
     </div>
