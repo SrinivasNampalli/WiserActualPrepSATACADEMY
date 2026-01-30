@@ -13,10 +13,11 @@ import { UniqueValueProp } from "@/components/unique-value-prop"
 export default function Home() {
   return (
     <main className="min-h-screen bg-white">
-      {/* Urgency banner at top */}
-      <SATCountdown variant="banner" />
-
-      <Navbar />
+      <div className="sticky top-0 z-50 w-full">
+        {/* Urgency banner at top */}
+        <SATCountdown variant="banner" />
+        <Navbar />
+      </div>
       <HeroSection />
 
       {/* Third-party trust badges */}

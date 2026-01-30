@@ -6,12 +6,12 @@ import Image from "next/image"
 
 // Map emotions to girlfriend expressions
 const emotionToImage: Record<MascotEmotion, string> = {
-    idle: "/girlfriend/animegirlsleepy.jpg",
-    thinking: "/girlfriend/animegirlbuisnessserious.jpg",
-    happy: "/girlfriend/animegirlsmirk.jpg",
-    celebrating: "/girlfriend/animegirlsmirk.jpg",
-    encouraging: "/girlfriend/animegirltsundere.jpg",
-    waving: "/girlfriend/animegirlsmirk.jpg",
+    idle: "/ai-tutor.png",
+    thinking: "/ai-tutor.png",
+    happy: "/ai-tutor.png",
+    celebrating: "/ai-tutor.png",
+    encouraging: "/ai-tutor.png",
+    waving: "/ai-tutor.png",
 }
 
 // Dynamic anime girlfriend mascot - grows bigger on events!
@@ -170,14 +170,14 @@ export function Mascot() {
                 <div
                     className="absolute inset-0 rounded-full blur-2xl transition-all duration-300"
                     style={{
-                        background: `radial-gradient(circle, rgba(255,105,180,${0.3 + sizeBoost * 0.005}) 0%, rgba(255,20,147,${0.15 + sizeBoost * 0.003}) 50%, transparent 70%)`,
+                        background: `radial-gradient(circle, rgba(98,182,203,${0.3 + sizeBoost * 0.005}) 0%, rgba(27,73,101,${0.15 + sizeBoost * 0.003}) 50%, transparent 70%)`,
                         transform: `scale(${1.2 + sizeBoost * 0.01})`,
                     }}
                 />
 
                 {/* Character image - grows dynamically! */}
                 <div
-                    className="relative rounded-full overflow-hidden border-4 border-white shadow-2xl transition-all duration-300 ring-4 ring-pink-400/50"
+                    className="relative rounded-full overflow-hidden border-4 border-white shadow-2xl transition-all duration-300 ring-4 ring-blue-400/50"
                     style={{ width: dynamicSize, height: dynamicSize }}
                 >
                     <Image
@@ -194,14 +194,14 @@ export function Mascot() {
                 {emotion === "celebrating" && (
                     <>
                         <div className="absolute -top-2 -left-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping" />
-                        <div className="absolute -top-1 -right-3 w-3 h-3 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: "0.2s" }} />
+                        <div className="absolute -top-1 -right-3 w-3 h-3 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: "0.2s" }} />
                         <div className="absolute -bottom-1 left-1 w-3 h-3 bg-cyan-400 rounded-full animate-ping" style={{ animationDelay: "0.4s" }} />
                     </>
                 )}
 
-                {/* Hearts when happy */}
+                {/* Tech icons when happy */}
                 {(emotion === "happy" || emotion === "waving") && (
-                    <div className="absolute -top-1 -right-1 text-lg animate-bounce">💕</div>
+                    <div className="absolute -top-1 -right-1 text-lg animate-bounce">⚡</div>
                 )}
             </div>
         </div>

@@ -141,6 +141,8 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
         setIsSubmitting(true)
         const supabase = createClient()
 
+        console.log("Submitting test for User:", userId, "Test ID:", test.id) // Debug log
+
         // Calculate score and category stats
         let correctCount = 0
         const categoryStats: CategoryStatsMap = {}
@@ -169,7 +171,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
         const score = Math.round(rawScore * 100) // Percentage score
 
         try {
-            const { data: resultData, error } = await supabase.from("test_results").insert({
+            const payload = {
                 user_id: userId,
                 test_id: test.id,
                 score: score,
@@ -180,15 +182,21 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
                 completed_at: new Date().toISOString(),
                 category_stats: categoryStats,
                 user_answers: answers, // Store user's answers for mistake log
-            }).select().single()
+            }
+            console.log("Submission Payload:", payload)
 
-            if (error) throw error
+            const { data: resultData, error } = await supabase.from("test_results").insert(payload).select().single()
+
+            if (error) {
+                console.error("Supabase Insert Error:", error)
+                throw error
+            }
 
             // Redirect to results page with detailed summary
             router.push(`/results/${resultData.id}`)
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error submitting test:", error)
-            alert("Failed to submit test. Please try again.")
+            alert(`Failed to submit test: ${error.message || JSON.stringify(error)}`)
         } finally {
             setIsSubmitting(false)
             setShowSubmitConfirm(false)
@@ -221,7 +229,7 @@ export function TestRunner({ test, questions, userId }: TestRunnerProps) {
     const isTimeWarning = timeLeft < 300 // Less than 5 minutes
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+        <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans">
             {/* Header - Bluebook Style Navy Blue */}
             <header className="bg-[#0D2240] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
                 <div className="flex items-center gap-4">

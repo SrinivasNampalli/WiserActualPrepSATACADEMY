@@ -19,14 +19,14 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-white/95 backdrop-blur-md shadow-md" : "bg-transparent"
+      className={`relative w-full transition-all duration-300 ${isScrolled ? "bg-white/95 backdrop-blur-md shadow-md" : "bg-white/95 backdrop-blur-md"
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className={`text-2xl font-bold transition-colors ${isScrolled ? "text-[#1B4B6B]" : "text-white"}`}>
+            <span className={`text-2xl font-bold transition-colors ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"}`}>
               WiserPrep
             </span>
           </Link>
@@ -35,28 +35,28 @@ export function Navbar() {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/#method"
-              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-white"
+              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"
                 }`}
             >
               How It Works
             </Link>
             <Link
               href="/study-planner"
-              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-white"
+              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"
                 }`}
             >
               Study Planner
             </Link>
             <Link
               href="/#reviews"
-              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-white"
+              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"
                 }`}
             >
               Reviews
             </Link>
             <Link
               href="/pricing"
-              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-white"
+              className={`text-sm font-medium transition-colors hover:text-theme ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"
                 }`}
             >
               Pricing
@@ -64,7 +64,7 @@ export function Navbar() {
             <Link href="/login">
               <Button
                 variant="ghost"
-                className={`${isScrolled ? "text-[#1B4B6B] hover:text-theme" : "text-white hover:text-theme"}`}
+                className={`${isScrolled ? "text-[#1B4B6B] hover:text-theme" : "text-[#1B4B6B] hover:text-theme"}`}
               >
                 Login
               </Button>
@@ -77,9 +77,9 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="Toggle menu">
             {isMobileMenuOpen ? (
-              <X className={`h-6 w-6 ${isScrolled ? "text-[#1B4B6B]" : "text-white"}`} />
+              <X className={`h-6 w-6 ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"}`} />
             ) : (
-              <Menu className={`h-6 w-6 ${isScrolled ? "text-[#1B4B6B]" : "text-white"}`} />
+              <Menu className={`h-6 w-6 ${isScrolled ? "text-[#1B4B6B]" : "text-[#1B4B6B]"}`} />
             )}
           </button>
         </div>

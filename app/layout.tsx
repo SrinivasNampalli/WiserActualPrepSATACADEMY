@@ -40,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased ${inter.className}`}>
+      <body className={`font-sans antialiased ${inter.className}`} suppressHydrationWarning>
         <ThemeContextProvider>
           <SubscriptionProvider>
             <MascotProvider>

@@ -388,9 +388,8 @@ export function StatsBar() {
                     <button
                       key={view}
                       onClick={() => setActiveView(view)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                        activeView === view ? "bg-[#62b6cb] text-[#1b4965]" : "text-white/60 hover:text-white"
-                      }`}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ${activeView === view ? "bg-[#62b6cb] text-[#1b4965]" : "text-white/60 hover:text-white"
+                        }`}
                     >
                       {view.charAt(0).toUpperCase() + view.slice(1)}
                     </button>
@@ -465,6 +464,7 @@ export function StatsBar() {
 
                         return (
                           <circle
+                            key={index}
                             cx={cx}
                             cy={cy}
                             r={isHovered ? 8 : isEndpoint ? 6 : 4}
